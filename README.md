@@ -1,5 +1,9 @@
 # Pol language support for VS Code
 
+*The editor client for [pol](https://github.com/sajonaro/pol). The language,
+the checker and the language server live there; this repository is the VS Code
+front end and nothing else.*
+
 Editor support for **Pol** — *Partial Olog*, an abstract language for modelling
 real-world domains — over all three of its file types:
 
@@ -34,19 +38,23 @@ $ pol-lsp --help            # confirm it is on PATH
 Then install the extension — from a `.vsix`, or by linking it (below) — and
 open a `.pol` file. Nothing to configure.
 
-### With a checkout of the pol repository
-
-A checkout's own build wins over any installed server, which is what you want
-while changing the language itself. From the repository root:
+### From this repository
 
 ```console
-$ make extension
+$ ./install.sh
 ```
 
-That builds the server, fetches the extension's dependencies, links the
-extension into every VS Code extensions directory it finds, and then **verifies
-the server answers a handshake** — so a success message means it works, not
-merely that it compiled.
+That fetches the extension's dependencies, links the extension into every VS
+Code extensions directory it finds, and **verifies the server answers a
+handshake** — so a success message means it works, not merely that it
+installed. With no `pol-lsp` yet it warns and installs anyway: the server is
+resolved when the extension activates, so installing pol afterwards is a
+perfectly good order to do things in.
+
+Dropped inside a checkout of [pol](https://github.com/sajonaro/pol) instead —
+as `tooling/vscode/` — the same script builds the server from source first, and
+that build wins over any installed one. That is what you want while changing
+the language itself.
 
 Then reload the window (<kbd>Ctrl+Shift+P</kbd> → *Developer: Reload Window*).
 VS Code only scans its extensions directory at startup, which is the one step a
@@ -55,23 +63,23 @@ script cannot do for you.
 Re-running is safe. To remove it:
 
 ```console
-$ ./tooling/vscode/install.sh --uninstall
+$ ./install.sh --uninstall
 ```
 
 The install is a **symlink** into the extensions directory, so editing this repo
-updates the extension with no reinstall — and moving or deleting the checkout
+updates the extension with no reinstall — and moving or deleting the clone
 breaks it, which is the trade.
 
 ### Requirements
 
-`npm` (for `vscode-languageclient`). For the checkout route, also an OCaml
-toolchain, found by `scripts/with-ocaml.sh`: `dune` on `PATH`, else `$SWITCH`,
-else a local `./_opam`. If none is found the script says exactly what to run.
+`npm`, for `vscode-languageclient`. Everything else is the server, which comes
+from [pol](https://github.com/sajonaro/pol) — this repository contains no OCaml
+and builds nothing.
 
 ### Packaging it instead
 
 ```console
-$ cd tooling/vscode && npm install
+$ npm install
 $ npx @vscode/vsce package
 $ code --install-extension pol-0.1.0.vsix
 ```
@@ -132,15 +140,15 @@ typecheck sixty lines of glue.
 Two behaviours have tests, because both fail **silently** when broken:
 
 ```console
-$ node tooling/vscode/test-watcher.js    # the restart-on-rebuild watcher
-$ node tooling/vscode/test-resolve.js    # where the server is looked for
+$ node test-watcher.js    # the restart-on-rebuild watcher
+$ node test-resolve.js    # where the server is looked for
 ```
 
-Both run as a fitness gate. `vscode` and `vscode-languageclient` are stubbed at
+Both run as a fitness gate in the pol repository. `vscode` and `vscode-languageclient` are stubbed at
 the module loader, so neither needs an editor.
 
 ## License
 
 Copyright (C) 2026 Alex Kunich. **GNU Affero General Public License, version 3
-or later** — the same as the rest of the project. See
-[LICENSE](../../LICENSE).
+or later** — the same as [pol](https://github.com/sajonaro/pol) itself. See
+[LICENSE](LICENSE).
