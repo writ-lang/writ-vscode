@@ -76,7 +76,7 @@ function stampOf(p) {
   }
 }
 
-// The name `opam install pol` puts on PATH (tooling/lsp/bin/dune's
+// The name an installed pol puts on PATH (tooling/lsp/bin/dune's
 // public_name). NOT the same as the in-checkout file name, which is
 // `pol_lsp.exe` under _build.
 const INSTALLED = "pol-lsp";
@@ -94,7 +94,7 @@ function onPath(exe) {
 // this repository builds its own server, and that one must win — the whole
 // point of an OCaml server is that the editor and the checker are the same
 // code, so a developer changing the language wants the build in front of them
-// and not whatever is installed. Everyone ELSE has run `opam install pol` (or
+// and not whatever is installed. Everyone ELSE has installed pol (by pin, or
 // unpacked a release) and has no checkout at all; for them the relative default
 // resolves to nothing, and `pol-lsp` on PATH is the only server there is.
 //
@@ -132,7 +132,8 @@ function activate(context) {
     vscode.window.showErrorMessage(
       `Pol: no language server — ${where}. ` +
         "In a checkout of the pol repository, run `make build`. Otherwise " +
-        "install pol (`opam install pol`, or a release tarball) so " +
+        "install pol (`opam pin add pol git+https://github.com/sajonaro/pol.git`, " +
+        "or a release tarball) so " +
         `\`${INSTALLED}\` is on PATH — or set \`${SETTING}\` to an absolute ` +
         "path to the server you want."
     );

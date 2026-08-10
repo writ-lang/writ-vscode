@@ -68,9 +68,9 @@
       "match": "(?<=\\()(schema|type|instance|initial|transition|equation|form|use|load)(?![-\\w])"
     },
     "schema": {
-      "comment": "Schema/arrow/instance clause words and the vacant literal (kernel \u00a79): to/of, the fixed/vacatable arrow flags, the when/do transition bodies, and vacant. Head position only.",
+      "comment": "Schema/arrow/instance clause words and the vacant literal (kernel \u00a79): to, the fixed/vacatable arrow flags, the when/do transition bodies, and vacant. Head position only.",
       "name": "keyword.other.arrow.pol",
-      "match": "(?<=\\()(arrow|to|of|fixed|vacatable|when|do|vacant)(?![-\\w])"
+      "match": "(?<=\\()(arrow|to|fixed|vacatable|when|do|vacant)(?![-\\w])"
     },
     "guard": {
       "comment": "Guard connectives and leaf predicates (core/syntax/grammar.ml, guard): and/or/not/is/defined/some. This alternation is what .afk-flow/check-grammar.py asserts against the engine; keep the six as whole ( | ) alternatives. Head position only.",

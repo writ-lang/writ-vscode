@@ -31,9 +31,16 @@ Two routes. The extension tries them in this order.
 The ordinary case. The extension needs `pol-lsp` on your `PATH`:
 
 ```console
-$ opam install pol          # or unpack a release tarball
-$ pol-lsp --help            # confirm it is on PATH
+$ opam pin add pol git+https://github.com/sajonaro/pol.git   # or unpack a release tarball
+$ command -v pol-lsp                                          # confirm it is on PATH
+/home/you/.opam/default/bin/pol-lsp
 ```
+
+`pol` is not in opam-repository, so there is no `opam install pol` to run — the
+pin is the no-checkout route, and opam does the cloning. The other ways to get
+one (a release tarball, `make install-pol` from a checkout) are in
+[pol's README](https://github.com/sajonaro/pol#install); any of them puts
+`pol-lsp` on your `PATH`, which is all this extension needs.
 
 Then install the extension — from a `.vsix`, or by linking it (below) — and
 open a `.pol` file. Nothing to configure.
@@ -84,7 +91,7 @@ $ npx @vscode/vsce package
 $ code --install-extension pol-0.1.0.vsix
 ```
 
-Or open `tooling/vscode/` in VS Code and press <kbd>F5</kbd> for an Extension
+Or open this repository in VS Code and press <kbd>F5</kbd> for an Extension
 Development Host.
 
 ## The setting
@@ -95,8 +102,8 @@ Development Host.
 - A **relative** path is resolved against each open workspace folder, so the
   default finds a checkout's own build with nobody editing a setting.
 - If no workspace folder has it, **`pol-lsp` is looked up on `PATH`** — which is
-  what `opam install pol` and the release tarball provide, and is how this
-  extension works with no checkout at all.
+  what an opam pin or a release tarball provides, and is how this extension
+  works with no checkout at all.
 - An **absolute** path is used exactly as given and nothing else is tried: if
   you name a server, you mean that server.
 
@@ -144,8 +151,9 @@ $ node test-watcher.js    # the restart-on-rebuild watcher
 $ node test-resolve.js    # where the server is looked for
 ```
 
-Both run as a fitness gate in the pol repository. `vscode` and `vscode-languageclient` are stubbed at
-the module loader, so neither needs an editor.
+Run them here: the editor client is its own repository now, so pol has no
+target that runs them. `vscode` and `vscode-languageclient` are stubbed at the
+module loader, so neither needs an editor.
 
 ## License
 

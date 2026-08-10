@@ -2,8 +2,8 @@
 //
 // This is the whole of "the extension works with pol installed separately".
 // Until it was written, the only candidate was a path under `_build`, which
-// exists ONLY inside a checkout — so on a machine that had run `opam install
-// pol` the extension found nothing, even though tooling/lsp/bin/dune installs
+// exists ONLY inside a checkout — so on a machine that had installed pol
+// separately the extension found nothing, even though tooling/lsp/bin/dune installs
 // `pol-lsp` precisely so that case works.
 //
 // The order matters as much as the set: a checkout's own build must win, because
@@ -77,7 +77,7 @@ check("an absolute setting is the only candidate", c.length === 1);
 check("and it is exactly what was set", c[0] === "/opt/pol/bin/pol-lsp");
 
 // 4. The PATH search uses the INSTALLED name, not the in-checkout file name.
-//    `opam install pol` produces `pol-lsp`; `_build` produces `pol_lsp.exe`.
+//    an installed pol produces `pol-lsp`; `_build` produces `pol_lsp.exe`.
 check("the installed name is pol-lsp", INSTALLED === "pol-lsp");
 check(
   "every PATH candidate ends in it",

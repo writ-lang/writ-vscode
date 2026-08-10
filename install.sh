@@ -14,7 +14,7 @@ ext_id="pol.pol-0.1.0"
 # INSIDE a pol checkout or not. This script ships with the extension, and the
 # extension is usable both ways: from the pol repository, where the server is
 # built from source two levels up, and on its own against a `pol-lsp` that
-# `opam install pol` already put on PATH. Deciding by looking for the engine
+# an installed pol already put on PATH. Deciding by looking for the engine
 # rather than by assuming, because `$here/../..` is a real directory either
 # way — it is simply not the pol repo when the extension lives alone.
 repo=$(cd "$here/../.." && pwd)
@@ -71,12 +71,12 @@ if [ "$in_checkout" = yes ]; then
 else
   # Nothing to build: there is no engine here. But refusing to install would be
   # wrong too — the client resolves the server at activation, so an install now
-  # and an `opam install pol` later is a legitimate order to do things in.
+  # and installing pol later is a legitimate order to do things in.
   if [ -n "$server" ] && [ -x "$server" ]; then
     say "using the installed server at $server"
   else
     warn "no \`pol-lsp\` on PATH — installing the client anyway, but it will have
-    nothing to talk to until pol is installed (\`opam install pol\`, or a release
+    nothing to talk to until pol is installed (\`opam pin add pol\`, or a release
     tarball). Syntax highlighting works regardless; diagnostics will not."
   fi
 fi
