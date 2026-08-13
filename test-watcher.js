@@ -13,7 +13,7 @@
 // are stubbed at the module loader. Nothing here needs the real ones: the
 // watcher only stats a path and calls `client.restart()`.
 //
-// Run: node tooling/vscode/test-watcher.js
+// Run: node test-watcher.js
 
 const Module = require("module");
 const fs = require("fs");

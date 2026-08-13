@@ -90,6 +90,34 @@ function onPath(exe) {
   return dirs.flatMap((d) => names.map((n) => path.join(d, n)));
 }
 
+// A writ checkout, identified by the engine's own file rather than by being
+// named `writ` — a checkout in a directory called something else is still one.
+function isCheckout(dir) {
+  return fs.existsSync(path.join(dir, "dune-project"));
+}
+
+// The checkouts one level below a workspace folder.
+//
+// WHY ONE LEVEL. Splitting writ and this extension into separate repositories
+// means the natural thing to open is the directory that CONTAINS both, and then
+// the relative default resolves against a folder that has no _build in it. The
+// server is right there, one directory down, and the extension said "no language
+// server" — the same symptom as not having built it, which is the wrong thing to
+// go and check. One level covers that layout and stops; this must not become a
+// walk of the workspace, which on a large tree would cost more than it saves.
+function checkoutsBelow(dir) {
+  let entries;
+  try {
+    entries = fs.readdirSync(dir, { withFileTypes: true });
+  } catch {
+    return []; // a folder that is gone or unreadable is not worth failing over
+  }
+  return entries
+    .filter((e) => e.isDirectory() || e.isSymbolicLink())
+    .map((e) => path.join(dir, e.name))
+    .filter(isCheckout);
+}
+
 // Where to look for the server, in order. Returns every path tried, so a
 // failure can name them rather than say "not found".
 //
@@ -110,7 +138,12 @@ function onPath(exe) {
 function candidates(configured) {
   if (path.isAbsolute(configured)) return [configured];
   const folders = vscode.workspace.workspaceFolders || [];
-  const inWorkspace = folders.map((f) => path.join(f.uri.fsPath, configured));
+  // The folder itself before anything under it: opening the checkout directly
+  // is the common case and must not be slowed down or second-guessed.
+  const inWorkspace = folders.flatMap((f) => [
+    path.join(f.uri.fsPath, configured),
+    ...checkoutsBelow(f.uri.fsPath).map((d) => path.join(d, configured)),
+  ]);
   return [...inWorkspace, ...onPath(INSTALLED)];
 }
 
@@ -179,7 +212,7 @@ function deactivate() {
 
 module.exports = { activate, deactivate };
 
-// Exposed for tooling/vscode/test-watcher.js, which drives the watcher against a
+// Exposed for test-watcher.js, which drives the watcher against a
 // real file on disk. The watcher is the one part of this glue with behaviour of
 // its own, and a watcher that silently never fires is the bug it exists to fix.
 module.exports.__test = {

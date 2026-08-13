@@ -60,10 +60,23 @@ installed. With no `writ-lsp` yet it warns and installs anyway: the server is
 resolved when the extension activates, so installing writ afterwards is a
 perfectly good order to do things in.
 
-Dropped inside a checkout of [writ](https://github.com/writ-lang/writ) instead —
-as `tooling/vscode/` — the same script builds the server from source first, and
-that build wins over any installed one. That is what you want while changing
-the language itself.
+Given a checkout of [writ](https://github.com/writ-lang/writ) instead, the same
+script builds the server from source first, and that build wins over any
+installed one — which is what you want while changing the language itself. It
+finds the checkout whether this extension sits *inside* it (as `tooling/vscode/`,
+where it began) or *beside* it, the layout the split into two repositories
+gives you:
+
+```
+projects/
+  writ/          ← the engine; the server is built here
+  writ-vscode/   ← this extension
+```
+
+Open the directory holding both and the extension still finds that build: it
+looks in each workspace folder and in the checkouts one level below it. If your
+checkouts are somewhere else entirely, point `WRIT_REPO` at the engine when
+installing, or set `writ.serverPath` to an absolute path.
 
 Then reload the window (<kbd>Ctrl+Shift+P</kbd> → *Developer: Reload Window*).
 VS Code only scans its extensions directory at startup, which is the one step a

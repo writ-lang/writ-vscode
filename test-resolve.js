@@ -13,7 +13,7 @@
 // an OCaml server exists so the editor and the checker are the same code, and
 // someone changing the language wants the build in front of them.
 //
-// Run: node tooling/vscode/test-resolve.js
+// Run: node test-resolve.js
 
 const Module = require("module");
 const path = require("path");
@@ -88,7 +88,58 @@ check(
 );
 check("PATH is actually searched", onPath(INSTALLED).length > 0);
 
-const n = 10 - failed;
+// 5. The workspace root is the PARENT of the checkout, not the checkout.
+//
+//    This is what the split into separate writ/ and writ-vscode/ repositories
+//    produces: you open the directory that holds both, so the relative default
+//    resolves against a folder with no _build in it, and the extension reported
+//    "no language server" while a perfectly good one sat one level down. A
+//    checkout is identified by dune-project, so only a real one is added, and
+//    only immediate subdirectories are looked at — this must not become a walk
+//    of the whole workspace.
+const os = require("os");
+const fs = require("fs");
+const root = fs.mkdtempSync(path.join(os.tmpdir(), "writ-resolve-"));
+fs.mkdirSync(path.join(root, "writ"));
+fs.writeFileSync(path.join(root, "writ", "dune-project"), "(lang dune 3.0)\n");
+fs.mkdirSync(path.join(root, "writ-vscode")); // a sibling that is NOT a checkout
+fs.mkdirSync(path.join(root, "notes"));
+
+workspace = [folder(root)];
+c = candidates(DEFAULT);
+check(
+  "a checkout one level below the workspace root is found",
+  c.includes(path.join(root, "writ", DEFAULT))
+);
+check(
+  "the workspace root itself is still tried first",
+  c[0] === path.join(root, DEFAULT)
+);
+check(
+  "a subdirectory that is not a checkout is not guessed at",
+  !c.some((p) => p.startsWith(path.join(root, "notes") + path.sep))
+);
+check(
+  "the nested checkout still beats anything on PATH",
+  c.indexOf(path.join(root, "writ", DEFAULT)) <
+    c.findIndex((p) => p.endsWith(path.sep + INSTALLED))
+);
+
+// An unreadable or absent folder must not throw — a workspace folder can name a
+// disconnected drive, and resolution failing there would take the whole
+// extension down at activation.
+workspace = [folder(path.join(root, "gone"))];
+let threw = false;
+try {
+  candidates(DEFAULT);
+} catch {
+  threw = true;
+}
+check("a workspace folder that does not exist is survivable", !threw);
+
+fs.rmSync(root, { recursive: true, force: true });
+
+const n = 15 - failed;
 console.log(
   failed === 0
     ? `extension resolve tests: ${n} checks passed`
