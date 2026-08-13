@@ -50,8 +50,8 @@ function check(name, cond) {
 }
 
 (async () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "pol-watch-"));
-  const bin = path.join(dir, "pol_lsp.exe");
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "writ-watch-"));
+  const bin = path.join(dir, "writ_lsp.exe");
   fs.writeFileSync(bin, "v1");
 
   let restarts = 0;

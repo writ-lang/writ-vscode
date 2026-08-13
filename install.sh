@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Copyright (C) 2026 Alex Kunich
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Install the .pol language support into VS Code.
+# Install the .writ language support into VS Code.
 #
 #   ./tooling/vscode/install.sh              # build, install, verify
 #   ./tooling/vscode/install.sh --uninstall  # remove it again
@@ -11,21 +11,21 @@
 set -euo pipefail
 
 here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-ext_id="pol.pol-0.1.0"
+ext_id="writ.writ-0.1.0"
 
-# INSIDE a pol checkout or not. This script ships with the extension, and the
-# extension is usable both ways: from the pol repository, where the server is
-# built from source two levels up, and on its own against a `pol-lsp` that
-# an installed pol already put on PATH. Deciding by looking for the engine
+# INSIDE a writ checkout or not. This script ships with the extension, and the
+# extension is usable both ways: from the writ repository, where the server is
+# built from source two levels up, and on its own against a `writ-lsp` that
+# an installed writ already put on PATH. Deciding by looking for the engine
 # rather than by assuming, because `$here/../..` is a real directory either
-# way — it is simply not the pol repo when the extension lives alone.
+# way — it is simply not the writ repo when the extension lives alone.
 repo=$(cd "$here/../.." && pwd)
 if [ -f "$repo/dune-project" ] && [ -d "$repo/core/stdlib" ]; then
   in_checkout=yes
-  server="$repo/_build/default/tooling/lsp/bin/pol_lsp.exe"
+  server="$repo/_build/default/tooling/lsp/bin/writ_lsp.exe"
 else
   in_checkout=no
-  server=$(command -v pol-lsp 2>/dev/null || true)
+  server=$(command -v writ-lsp 2>/dev/null || true)
 fi
 
 say()  { printf '\033[1m==>\033[0m %s\n' "$*"; }
@@ -73,12 +73,12 @@ if [ "$in_checkout" = yes ]; then
 else
   # Nothing to build: there is no engine here. But refusing to install would be
   # wrong too — the client resolves the server at activation, so an install now
-  # and installing pol later is a legitimate order to do things in.
+  # and installing writ later is a legitimate order to do things in.
   if [ -n "$server" ] && [ -x "$server" ]; then
     say "using the installed server at $server"
   else
-    warn "no \`pol-lsp\` on PATH — installing the client anyway, but it will have
-    nothing to talk to until pol is installed (\`opam pin add pol\`, or a release
+    warn "no \`writ-lsp\` on PATH — installing the client anyway, but it will have
+    nothing to talk to until writ is installed (\`opam pin add writ\`, or a release
     tarball). Syntax highlighting works regardless; diagnostics will not."
   fi
 fi
@@ -127,11 +127,11 @@ $(say "installed")
     Reload the window — Ctrl+Shift+P → "Developer: Reload Window"
     VS Code only scans its extensions directory at startup.
 
-  Then open any tests/models/*.pol file. To confirm the server is live, change a
+  Then open any tests/models/*.writ file. To confirm the server is live, change a
   value to something outside its declared domain and watch it get underlined.
 
-  If nothing happens, check View → Output → "Pol Language Server".
-  If your workspace root is not this repo, set "pol.serverPath" to:
+  If nothing happens, check View → Output → "Writ Language Server".
+  If your workspace root is not this repo, set "writ.serverPath" to:
     $server
 
   Uninstall with: $0 --uninstall

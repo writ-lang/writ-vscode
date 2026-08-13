@@ -13,7 +13,7 @@ const path = require("path");
 const vscode = require("vscode");
 const { LanguageClient, TransportKind } = require("vscode-languageclient/node");
 
-const SETTING = "pol.serverPath";
+const SETTING = "writ.serverPath";
 const POLL_MS = 2000;
 
 let client;
@@ -58,7 +58,7 @@ function watchServerBinary(serverPath, log, pollMs = POLL_MS) {
       log("server restarted; diagnostics are from the current build");
     } catch (e) {
       vscode.window.showErrorMessage(
-        `Pol: the language server changed on disk but would not restart: ${e}. ` +
+        `Writ: the language server changed on disk but would not restart: ${e}. ` +
           "Reload the window to pick it up."
       );
     }
@@ -79,10 +79,10 @@ function stampOf(p) {
   }
 }
 
-// The name an installed pol puts on PATH (tooling/lsp/bin/dune's
+// The name an installed writ puts on PATH (tooling/lsp/bin/dune's
 // public_name). NOT the same as the in-checkout file name, which is
-// `pol_lsp.exe` under _build.
-const INSTALLED = "pol-lsp";
+// `writ_lsp.exe` under _build.
+const INSTALLED = "writ-lsp";
 
 function onPath(exe) {
   const dirs = (process.env.PATH || "").split(path.delimiter).filter(Boolean);
@@ -97,13 +97,13 @@ function onPath(exe) {
 // this repository builds its own server, and that one must win — the whole
 // point of an OCaml server is that the editor and the checker are the same
 // code, so a developer changing the language wants the build in front of them
-// and not whatever is installed. Everyone ELSE has installed pol (by pin, or
+// and not whatever is installed. Everyone ELSE has installed writ (by pin, or
 // unpacked a release) and has no checkout at all; for them the relative default
-// resolves to nothing, and `pol-lsp` on PATH is the only server there is.
+// resolves to nothing, and `writ-lsp` on PATH is the only server there is.
 //
 // Serving only the first audience is what this did until now, which meant the
-// extension could not be used with pol installed separately — the case
-// tooling/lsp/bin/dune installs `pol-lsp` for in the first place.
+// extension could not be used with writ installed separately — the case
+// tooling/lsp/bin/dune installs `writ-lsp` for in the first place.
 //
 // An ABSOLUTE setting is taken literally and nothing is guessed after it: an
 // operator who names a server means that server.
@@ -117,7 +117,7 @@ function candidates(configured) {
 function activate(context) {
   const configured = vscode.workspace
     .getConfiguration()
-    .get(SETTING, "_build/default/tooling/lsp/bin/pol_lsp.exe");
+    .get(SETTING, "_build/default/tooling/lsp/bin/writ_lsp.exe");
   const tried = candidates(configured);
   const found = tried.find((p) => fs.existsSync(p));
 
@@ -126,16 +126,16 @@ function activate(context) {
     // which is the same symptom as a broken server and much harder to chase.
     //
     // The PATH candidates are summarised rather than listed: naming forty
-    // directories buries the one thing worth reading, which is that `pol-lsp`
+    // directories buries the one thing worth reading, which is that `writ-lsp`
     // was not in any of them.
     const inWorkspace = tried.filter((p) => !onPath(INSTALLED).includes(p));
     const where = inWorkspace.length
       ? `not at ${inWorkspace.join(", ")}, and \`${INSTALLED}\` is not on PATH`
       : `\`${INSTALLED}\` is not on PATH`;
     vscode.window.showErrorMessage(
-      `Pol: no language server — ${where}. ` +
-        "In a checkout of the pol repository, run `make build`. Otherwise " +
-        "install pol (`opam pin add pol git+https://github.com/sajonaro/pol.git`, " +
+      `Writ: no language server — ${where}. ` +
+        "In a checkout of the writ repository, run `make build`. Otherwise " +
+        "install writ (`opam pin add writ git+https://github.com/writ-lang/writ.git`, " +
         "or a release tarball) so " +
         `\`${INSTALLED}\` is on PATH — or set \`${SETTING}\` to an absolute ` +
         "path to the server you want."
@@ -150,13 +150,13 @@ function activate(context) {
   };
 
   const clientOptions = {
-    documentSelector: [{ scheme: "file", language: "pol" }],
-    outputChannelName: "Pol Language Server",
+    documentSelector: [{ scheme: "file", language: "writ" }],
+    outputChannelName: "Writ Language Server",
   };
 
   client = new LanguageClient(
-    "pol",
-    "Pol Language Server",
+    "writ",
+    "Writ Language Server",
     serverOptions,
     clientOptions
   );

@@ -1,15 +1,15 @@
-# Pol language support for VS Code
+# Writ language support for VS Code
 
-*The editor client for [pol](https://github.com/sajonaro/pol). The language,
+*The editor client for [writ](https://github.com/writ-lang/writ). The language,
 the checker and the language server live there; this repository is the VS Code
 front end and nothing else.*
 
-Editor support for **Pol** — *Partial Olog*, an abstract language for modelling
+Editor support for **Writ** — *Partial Olog*, an abstract language for modelling
 real-world domains — over all three of its file types:
 
 | | |
 | --- | --- |
-| `.pol` | models and libraries — schema, instance, transitions |
+| `.writ` | models and libraries — schema, instance, transitions |
 | `.claims` | the questions asked of a model, kept as their own document |
 | `.rules` | Datalog-style derivations over a model's situation space |
 
@@ -19,31 +19,31 @@ and completion.
 
 **The extension does not bundle a server and does not download one.** The point
 of an OCaml server is that the editor and the checker are the *same code*, so a
-diagnostic in the editor is one `pol check` would give you. It talks to a
-`pol-lsp` you already have.
+diagnostic in the editor is one `writ check` would give you. It talks to a
+`writ-lsp` you already have.
 
 ## Install
 
 Two routes. The extension tries them in this order.
 
-### With pol installed, and no checkout
+### With writ installed, and no checkout
 
-The ordinary case. The extension needs `pol-lsp` on your `PATH`:
+The ordinary case. The extension needs `writ-lsp` on your `PATH`:
 
 ```console
-$ opam pin add pol git+https://github.com/sajonaro/pol.git   # or unpack a release tarball
-$ command -v pol-lsp                                          # confirm it is on PATH
-/home/you/.opam/default/bin/pol-lsp
+$ opam pin add writ git+https://github.com/writ-lang/writ.git   # or unpack a release tarball
+$ command -v writ-lsp                                          # confirm it is on PATH
+/home/you/.opam/default/bin/writ-lsp
 ```
 
-`pol` is not in opam-repository, so there is no `opam install pol` to run — the
+`writ` is not in opam-repository, so there is no `opam install writ` to run — the
 pin is the no-checkout route, and opam does the cloning. The other ways to get
-one (a release tarball, `make install-pol` from a checkout) are in
-[pol's README](https://github.com/sajonaro/pol#install); any of them puts
-`pol-lsp` on your `PATH`, which is all this extension needs.
+one (a release tarball, `make install-writ` from a checkout) are in
+[writ's README](https://github.com/writ-lang/writ#install); any of them puts
+`writ-lsp` on your `PATH`, which is all this extension needs.
 
 Then install the extension — from a `.vsix`, or by linking it (below) — and
-open a `.pol` file. Nothing to configure.
+open a `.writ` file. Nothing to configure.
 
 ### From this repository
 
@@ -54,11 +54,11 @@ $ ./install.sh
 That fetches the extension's dependencies, links the extension into every VS
 Code extensions directory it finds, and **verifies the server answers a
 handshake** — so a success message means it works, not merely that it
-installed. With no `pol-lsp` yet it warns and installs anyway: the server is
-resolved when the extension activates, so installing pol afterwards is a
+installed. With no `writ-lsp` yet it warns and installs anyway: the server is
+resolved when the extension activates, so installing writ afterwards is a
 perfectly good order to do things in.
 
-Dropped inside a checkout of [pol](https://github.com/sajonaro/pol) instead —
+Dropped inside a checkout of [writ](https://github.com/writ-lang/writ) instead —
 as `tooling/vscode/` — the same script builds the server from source first, and
 that build wins over any installed one. That is what you want while changing
 the language itself.
@@ -80,7 +80,7 @@ breaks it, which is the trade.
 ### Requirements
 
 `npm`, for `vscode-languageclient`. Everything else is the server, which comes
-from [pol](https://github.com/sajonaro/pol) — this repository contains no OCaml
+from [writ](https://github.com/writ-lang/writ) — this repository contains no OCaml
 and builds nothing.
 
 ### Packaging it instead
@@ -88,7 +88,7 @@ and builds nothing.
 ```console
 $ npm install
 $ npx @vscode/vsce package
-$ code --install-extension pol-0.1.0.vsix
+$ code --install-extension writ-0.1.0.vsix
 ```
 
 Or open this repository in VS Code and press <kbd>F5</kbd> for an Extension
@@ -96,12 +96,12 @@ Development Host.
 
 ## The setting
 
-**`pol.serverPath`** — default
-`_build/default/tooling/lsp/bin/pol_lsp.exe`.
+**`writ.serverPath`** — default
+`_build/default/tooling/lsp/bin/writ_lsp.exe`.
 
 - A **relative** path is resolved against each open workspace folder, so the
   default finds a checkout's own build with nobody editing a setting.
-- If no workspace folder has it, **`pol-lsp` is looked up on `PATH`** — which is
+- If no workspace folder has it, **`writ-lsp` is looked up on `PATH`** — which is
   what an opam pin or a release tarball provides, and is how this extension
   works with no checkout at all.
 - An **absolute** path is used exactly as given and nothing else is tried: if
@@ -118,24 +118,24 @@ keeps the old one. Without this the editor goes on answering with a language one
 build out of date, and the symptom is a squiggle on code the CLI accepts — at
 its most confusing exactly when you are changing the language.
 
-The client watches the binary and restarts on its own. **View → Output → "Pol
+The client watches the binary and restarts on its own. **View → Output → "Writ
 Language Server"** shows which server it launched, and says so when it swaps:
 
 ```
-[client] server: /home/you/pol/_build/default/tooling/lsp/bin/pol_lsp.exe
+[client] server: /home/you/writ/_build/default/tooling/lsp/bin/writ_lsp.exe
 [client] server binary changed on disk — restarting (…)
 [client] server restarted; diagnostics are from the current build
 ```
 
 ## If something looks wrong
 
-- **A diagnostic you disagree with** — `pol check` is the authority; same code,
+- **A diagnostic you disagree with** — `writ check` is the authority; same code,
   no process to go stale. If they differ, the server is stale, and the output
   channel above shows whether it restarted.
 - **No diagnostics at all** — check that channel for which server was launched,
   or whether the extension reported finding none.
-- **A `(load …)` resolving to the wrong file** — `POL_TRACE_LOADS=1 pol check
-  FILE` prints what each load actually resolved to. A `stdlib.pol` sitting
+- **A `(load …)` resolving to the wrong file** — `WRIT_TRACE_LOADS=1 writ check
+  FILE` prints what each load actually resolved to. A `stdlib.writ` sitting
   beside your model replaces the installed one, by design and silently.
 
 ## Development
@@ -151,12 +151,12 @@ $ node test-watcher.js    # the restart-on-rebuild watcher
 $ node test-resolve.js    # where the server is looked for
 ```
 
-Run them here: the editor client is its own repository now, so pol has no
+Run them here: the editor client is its own repository now, so writ has no
 target that runs them. `vscode` and `vscode-languageclient` are stubbed at the
 module loader, so neither needs an editor.
 
 ## License
 
 Copyright (C) 2026 Alex Kunich. **GNU Affero General Public License, version 3
-or later** — the same as [pol](https://github.com/sajonaro/pol) itself. See
+or later** — the same as [writ](https://github.com/writ-lang/writ) itself. See
 [LICENSE](LICENSE).

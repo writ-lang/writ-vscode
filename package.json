@@ -1,9 +1,9 @@
 {
-  "name": "pol",
-  "displayName": "Pol (Partial Olog)",
-  "description": "Authoring support for Pol \u2014 an abstract language for modelling real-world domains as partial Ologs \u2014 over .pol models, .claims question files and .rules derivations: diagnostics, outline, hover and completion, served by the language's own OCaml server.",
+  "name": "writ",
+  "displayName": "Writ",
+  "description": "Authoring support for Writ \u2014 model a rule-governed world; get every consequence back, with the route \u2014 over .writ models, .claims question files and .rules derivations: diagnostics, outline, hover and completion, served by the language's own OCaml server.",
   "version": "0.1.0",
-  "publisher": "pol",
+  "publisher": "writ",
   "private": true,
   "engines": {
     "vscode": "^1.82.0"
@@ -18,13 +18,13 @@
   "contributes": {
     "languages": [
       {
-        "id": "pol",
+        "id": "writ",
         "aliases": [
-          "Pol",
-          "pol"
+          "Writ",
+          "writ"
         ],
         "extensions": [
-          ".pol",
+          ".writ",
           ".claims",
           ".rules"
         ],
@@ -33,18 +33,18 @@
     ],
     "grammars": [
       {
-        "language": "pol",
-        "scopeName": "source.pol",
-        "path": "./syntaxes/pol.tmLanguage.json"
+        "language": "writ",
+        "scopeName": "source.writ",
+        "path": "./syntaxes/writ.tmLanguage.json"
       }
     ],
     "configuration": {
-      "title": "Pol",
+      "title": "Writ",
       "properties": {
-        "pol.serverPath": {
+        "writ.serverPath": {
           "type": "string",
-          "default": "_build/default/tooling/lsp/bin/pol_lsp.exe",
-          "markdownDescription": "Path to the `pol-lsp` language server executable.\n\nA **relative** path is resolved against each open workspace folder, so the default finds the server built by `make build` in a checkout of the pol repository. If no workspace folder has it, `pol-lsp` is looked up on `PATH` \u2014 which is what an opam pin of pol or a release tarball provides, and is how this extension works without a checkout.\n\nAn **absolute** path is used exactly as given and nothing else is tried."
+          "default": "_build/default/tooling/lsp/bin/writ_lsp.exe",
+          "markdownDescription": "Path to the `writ-lsp` language server executable.\n\nA **relative** path is resolved against each open workspace folder, so the default finds the server built by `make build` in a checkout of the writ repository. If no workspace folder has it, `writ-lsp` is looked up on `PATH` \u2014 which is what an opam pin of writ or a release tarball provides, and is how this extension works without a checkout.\n\nAn **absolute** path is used exactly as given and nothing else is tried."
         }
       }
     }
@@ -55,10 +55,10 @@
   "license": "AGPL-3.0-or-later",
   "repository": {
     "type": "git",
-    "url": "https://github.com/sajonaro/pol.git"
+    "url": "https://github.com/writ-lang/writ.git"
   },
   "keywords": [
-    "pol",
+    "writ",
     "olog",
     "modelling",
     "formal methods",

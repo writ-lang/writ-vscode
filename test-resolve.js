@@ -3,11 +3,11 @@
 
 // Where the client looks for the language server, and in what order.
 //
-// This is the whole of "the extension works with pol installed separately".
+// This is the whole of "the extension works with writ installed separately".
 // Until it was written, the only candidate was a path under `_build`, which
-// exists ONLY inside a checkout — so on a machine that had installed pol
+// exists ONLY inside a checkout — so on a machine that had installed writ
 // separately the extension found nothing, even though tooling/lsp/bin/dune installs
-// `pol-lsp` precisely so that case works.
+// `writ-lsp` precisely so that case works.
 //
 // The order matters as much as the set: a checkout's own build must win, because
 // an OCaml server exists so the editor and the checker are the same code, and
@@ -48,40 +48,40 @@ function check(name, cond) {
   }
 }
 
-const DEFAULT = "_build/default/tooling/lsp/bin/pol_lsp.exe";
+const DEFAULT = "_build/default/tooling/lsp/bin/writ_lsp.exe";
 const folder = (p) => ({ uri: { fsPath: p } });
 
 // 1. In a checkout: the build comes first, the installed server after it.
-workspace = [folder("/w/pol")];
+workspace = [folder("/w/writ")];
 let c = candidates(DEFAULT);
-check("a checkout's own build is tried first", c[0] === path.join("/w/pol", DEFAULT));
-check("and the installed pol-lsp is still a fallback", c.some((p) => p.endsWith(path.sep + INSTALLED)));
+check("a checkout's own build is tried first", c[0] === path.join("/w/writ", DEFAULT));
+check("and the installed writ-lsp is still a fallback", c.some((p) => p.endsWith(path.sep + INSTALLED)));
 check(
   "the build is tried BEFORE anything on PATH",
-  c.indexOf(path.join("/w/pol", DEFAULT)) <
+  c.indexOf(path.join("/w/writ", DEFAULT)) <
     c.findIndex((p) => p.endsWith(path.sep + INSTALLED))
 );
 
-// 2. No workspace at all — a lone .pol file, or pol installed without a
+// 2. No workspace at all — a lone .writ file, or writ installed without a
 //    checkout. This is the case that used to yield an empty list.
 workspace = [];
 c = candidates(DEFAULT);
 check("with no workspace there is still somewhere to look", c.length > 0);
 check(
-  "and it is pol-lsp on PATH",
+  "and it is writ-lsp on PATH",
   c.every((p) => p.endsWith(path.sep + INSTALLED))
 );
 
 // 3. An absolute setting is taken literally: an operator naming a server means
 //    that server, and nothing is guessed after it.
-workspace = [folder("/w/pol")];
-c = candidates("/opt/pol/bin/pol-lsp");
+workspace = [folder("/w/writ")];
+c = candidates("/opt/writ/bin/writ-lsp");
 check("an absolute setting is the only candidate", c.length === 1);
-check("and it is exactly what was set", c[0] === "/opt/pol/bin/pol-lsp");
+check("and it is exactly what was set", c[0] === "/opt/writ/bin/writ-lsp");
 
 // 4. The PATH search uses the INSTALLED name, not the in-checkout file name.
-//    an installed pol produces `pol-lsp`; `_build` produces `pol_lsp.exe`.
-check("the installed name is pol-lsp", INSTALLED === "pol-lsp");
+//    an installed writ produces `writ-lsp`; `_build` produces `writ_lsp.exe`.
+check("the installed name is writ-lsp", INSTALLED === "writ-lsp");
 check(
   "every PATH candidate ends in it",
   onPath(INSTALLED).every((p) => path.basename(p).startsWith(INSTALLED))
