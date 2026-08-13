@@ -63,5 +63,6 @@
     "modelling",
     "formal methods",
     "state machine"
-  ]
+  ],
+  "icon": "icon.png"
 }

@@ -1,5 +1,7 @@
 # Writ language support for VS Code
 
+<img src="docs/images/writ-mark-200.png" alt="writ" width="120" align="left" hspace="16" vspace="4">
+
 *The editor client for [writ](https://github.com/writ-lang/writ). The language,
 the checker and the language server live there; this repository is the VS Code
 front end and nothing else.*
