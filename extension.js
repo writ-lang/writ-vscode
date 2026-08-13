@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Alex Kunich
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
 // The VS Code client. It does one thing: find the server this repository built
 // and hand it to vscode-languageclient over stdio.
 //

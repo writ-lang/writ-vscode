@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Alex Kunich
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
 // Where the client looks for the language server, and in what order.
 //
 // This is the whole of "the extension works with pol installed separately".

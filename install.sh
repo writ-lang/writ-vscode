@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Copyright (C) 2026 Alex Kunich
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Install the .pol language support into VS Code.
 #
 #   ./tooling/vscode/install.sh              # build, install, verify

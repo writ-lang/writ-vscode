@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Alex Kunich
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
 // Drives extension.js's server-binary watcher against a real file on disk.
 //
 // The watcher is the only part of the client with behaviour of its own, and its
