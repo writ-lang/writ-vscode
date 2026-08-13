@@ -83,14 +83,14 @@
       "match": "(?<=\\()(set|vacate|gap)(?![-\\w])"
     },
     "modality": {
-      "comment": "The three property modalities in .claims files (core/syntax/claims_parser.ml): never/possible/live. Head position only.",
+      "comment": "The four property modalities in .claims files (core/syntax/claims_parser.ml): never/possible/live/inevitable. Head position only.",
       "name": "keyword.other.modality.pol",
-      "match": "(?<=\\()(never|possible|live)(?![-\\w])"
+      "match": "(?<=\\()(never|possible|live|inevitable)(?![-\\w])"
     },
     "interrogator": {
-      "comment": "The interrogator's file-format words (kernel \u00a79) \u2014 not the language: property/query/where/accept and the functor/transport vocabulary. Head position only.",
+      "comment": "The interrogator's file-format words (kernel \u00a79) \u2014 not the language: property/query/where/accept, the fairness clause an inevitable may carry, and the functor/transport vocabulary. Head position only.",
       "name": "keyword.other.interrogator.pol",
-      "match": "(?<=\\()(relation|rule|property|query|where|accept|check|via|functor|from|over|map)(?![-\\w])"
+      "match": "(?<=\\()(relation|rule|property|query|where|fair|accept|check|via|functor|from|over|map)(?![-\\w])"
     },
     "rest": {
       "comment": "The &rest splice marker in a form pattern (kernel \u00a76).",
@@ -103,9 +103,9 @@
       "match": "(?<=\\()=(?=\\s)"
     },
     "rules-builtin": {
-      "comment": "The extension's five BUILT-IN relations (core/syntax/rules_parser.ml, `builtins`): situation/init/edge/gap-edge/holds. Their arities and sorts are fixed, so a literal headed by one of these is never a user relation \u2014 which is exactly why they read as vocabulary and not as a name. Head position only. Kept as whole ( | ) alternatives for .afk-flow/check-grammar.py.",
+      "comment": "The extension's seven BUILT-IN relations (core/syntax/rules_parser.ml, `builtins`): situation/init/edge/gap-edge/phase/phase-step/holds. Their arities and sorts are fixed, so a literal headed by one of these is never a user relation \u2014 which is exactly why they read as vocabulary and not as a name. Head position only. Kept as whole ( | ) alternatives for .afk-flow/check-grammar.py.",
       "name": "support.function.rules-builtin.pol",
-      "match": "(?<=\\()(situation|init|edge|gap-edge|holds)(?![-\\w])"
+      "match": "(?<=\\()(situation|init|edge|gap-edge|phase-step|phase|holds)(?![-\\w])"
     },
     "variable": {
       "comment": "A rule VARIABLE (core/data/rules.ml, `is_var`) and a form SLOT (core/syntax/forms.ml, `is_slot`) are the same lexical class \u2014 at least one A-Z and no a-z \u2014 so one pattern paints both, and a .rules file stops being a wall of unpainted S and T. Last, so a reserved word never loses to it. The lookbehind keeps it off the tail of a dotted chain (SUBJECT.headed-by paints the root only) and off mid-token positions.",
