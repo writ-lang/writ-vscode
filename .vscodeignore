@@ -3,3 +3,23 @@
 **/*.map
 **/.eslintrc.json
 node_modules/.bin/**
+
+# Development-only files. They belong in the repository and not in a .vsix: the
+# tests drive the client against a real filesystem and cannot run inside an
+# installed extension, and install.sh is the OTHER way to install this — shipping
+# it inside the thing it installs is a loop that can only confuse.
+test-*.js
+install.sh
+package-lock.json
+CLA.md
+CONTRIBUTING.md
+
+# Repository plumbing. `vsce ls` is the only thing that shows these — they are
+# invisible in the source tree and would otherwise ride along into every .vsix.
+.mailmap
+.github/**
+
+# NOT ignored, deliberately:
+#   docs/**   — README.md embeds docs/images/writ-mark-200.png, so the marketplace
+#               page loses its mark without it. 44K, and worth it.
+#   LICENSE, NOTICE, AUTHORS — AGPL-3.0-or-later; the notices ship with the work.

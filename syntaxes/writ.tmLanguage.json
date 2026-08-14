@@ -73,12 +73,12 @@
       "match": "(?<=\\()(arrow|to|fixed|vacatable|when|do|vacant)(?![-\\w])"
     },
     "guard": {
-      "comment": "Guard connectives and leaf predicates (core/syntax/grammar.ml, guard): and/or/not/is/defined/some. This alternation is what .afk-flow/check-grammar.py asserts against the engine; keep the six as whole ( | ) alternatives. Head position only.",
+      "comment": "Guard connectives and leaf predicates (core/syntax/grammar.ml, guard): and/or/not/is/defined/some. These six are `guard_words` in core/syntax/rules_parser.ml; a word added there must be added here, or the editor silently paints it as a user relation. Kept as whole ( | ) alternatives so the set can be diffed against that list by eye. Head position only.",
       "name": "support.function.guard.writ",
       "match": "(?<=\\()(and|or|not|is|defined|some)(?![-\\w])"
     },
     "effect": {
-      "comment": "Effect heads (core/syntax/grammar.ml, effect): set/vacate/gap. Also asserted by check-grammar.py as whole ( | ) alternatives. Head position only.",
+      "comment": "Effect heads (core/syntax/grammar.ml, effect): set/vacate/gap. Kept as whole ( | ) alternatives for the same reason as the guard set above. Head position only.",
       "name": "keyword.other.effect.writ",
       "match": "(?<=\\()(set|vacate|gap)(?![-\\w])"
     },
@@ -103,7 +103,7 @@
       "match": "(?<=\\()=(?=\\s)"
     },
     "rules-builtin": {
-      "comment": "The extension's seven BUILT-IN relations (core/syntax/rules_parser.ml, `builtins`): situation/init/edge/gap-edge/phase/phase-step/holds. Their arities and sorts are fixed, so a literal headed by one of these is never a user relation \u2014 which is exactly why they read as vocabulary and not as a name. Head position only. Kept as whole ( | ) alternatives for .afk-flow/check-grammar.py.",
+      "comment": "The extension's seven BUILT-IN relations (core/syntax/rules_parser.ml, `builtins`): situation/init/edge/gap-edge/phase/phase-step/holds. Their arities and sorts are fixed, so a literal headed by one of these is never a user relation \u2014 which is exactly why they read as vocabulary and not as a name. Head position only. Kept as whole ( | ) alternatives so they can be diffed against `builtins` by eye.",
       "name": "support.function.rules-builtin.writ",
       "match": "(?<=\\()(situation|init|edge|gap-edge|phase-step|phase|holds)(?![-\\w])"
     },
