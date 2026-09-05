@@ -1,7 +1,7 @@
 {
   "name": "writ",
   "displayName": "Writ",
-  "description": "Authoring support for Writ \u2014 model a rule-governed world; get every consequence back, with the route \u2014 over .writ models, .claims question files and .rules derivations: diagnostics, outline, hover and completion, served by the language's own OCaml server.",
+  "description": "Authoring support for Writ — model a rule-governed world; get every consequence back, with the route — over .writ models, .claims question files and .rules derivations: diagnostics, outline, hover and completion, served by the language's own OCaml server.",
   "version": "0.1.0",
   "publisher": "writ",
   "private": true,
@@ -15,6 +15,11 @@
     "workspace"
   ],
   "main": "./extension.js",
+  "scripts": {
+    "test": "scripts/test.sh",
+    "package": "scripts/package-extension.sh",
+    "version:check": "scripts/version.sh"
+  },
   "contributes": {
     "languages": [
       {
@@ -28,7 +33,11 @@
           ".claims",
           ".rules"
         ],
-        "configuration": "./language-configuration.json"
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "light": "./icons/writ-file-light.svg",
+          "dark": "./icons/writ-file-dark.svg"
+        }
       }
     ],
     "grammars": [
@@ -38,13 +47,135 @@
         "path": "./syntaxes/writ.tmLanguage.json"
       }
     ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "writ",
+          "title": "Writ",
+          "icon": "icons/writ-activitybar.svg"
+        }
+      ]
+    },
+    "views": {
+      "writ": [
+        {
+          "type": "webview",
+          "id": "writ.home",
+          "name": "Overview"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "writ.check",
+        "title": "Writ: Check This File",
+        "icon": "$(play)"
+      },
+      {
+        "command": "writ.show",
+        "title": "Writ: Show a Situation…"
+      },
+      {
+        "command": "writ.derive",
+        "title": "Writ: Answer a Relation…"
+      },
+      {
+        "command": "writ.compare",
+        "title": "Writ: Compare With Another Model…"
+      },
+      {
+        "command": "writ.restartServer",
+        "title": "Writ: Restart the Language Server",
+        "icon": "$(debug-restart)"
+      },
+      {
+        "command": "writ.showOutput",
+        "title": "Writ: Show the Server Log"
+      },
+      {
+        "command": "writ.build",
+        "title": "Writ: Build the Engine",
+        "icon": "$(tools)"
+      },
+      {
+        "command": "writ.update",
+        "title": "Writ: Update writ…"
+      },
+      {
+        "command": "writ.openOverview",
+        "title": "Writ: Open the Writ Panel"
+      },
+      {
+        "command": "writ.openSettings",
+        "title": "Writ: Settings"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "writ.check",
+          "when": "resourceLangId == writ",
+          "group": "navigation"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "writ.check",
+          "when": "resourceLangId == writ",
+          "group": "writ@1"
+        },
+        {
+          "command": "writ.show",
+          "when": "resourceLangId == writ",
+          "group": "writ@2"
+        },
+        {
+          "command": "writ.derive",
+          "when": "resourceLangId == writ",
+          "group": "writ@3"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "writ.check",
+          "when": "resourceExtname == .writ || resourceExtname == .claims || resourceExtname == .rules",
+          "group": "writ"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "writ.check",
+          "when": "resourceLangId == writ"
+        },
+        {
+          "command": "writ.show",
+          "when": "resourceLangId == writ"
+        },
+        {
+          "command": "writ.derive",
+          "when": "resourceLangId == writ"
+        },
+        {
+          "command": "writ.compare",
+          "when": "resourceExtname == .writ"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "writ.check",
+        "key": "ctrl+k ctrl+enter",
+        "mac": "cmd+k cmd+enter",
+        "when": "editorTextFocus && editorLangId == writ"
+      }
+    ],
     "configuration": {
       "title": "Writ",
       "properties": {
         "writ.serverPath": {
           "type": "string",
           "default": "_build/default/tooling/lsp/bin/writ_lsp.exe",
-          "markdownDescription": "Path to the `writ-lsp` language server executable.\n\nA **relative** path is resolved against each open workspace folder, so the default finds the server built by `make build` in a checkout of the writ repository. If no workspace folder has it, `writ-lsp` is looked up on `PATH` \u2014 which is what an opam pin of writ or a release tarball provides, and is how this extension works without a checkout.\n\nAn **absolute** path is used exactly as given and nothing else is tried."
+          "markdownDescription": "Path to the `writ-lsp` language server executable.\n\nA **relative** path is resolved against each open workspace folder, so the default finds the server built by `make build` in a checkout of the writ repository. If no workspace folder has it, `writ-lsp` is looked up on `PATH` — which is what an opam pin of writ or a release tarball provides, and is how this extension works without a checkout.\n\nAn **absolute** path is used exactly as given and nothing else is tried."
         }
       }
     }
@@ -64,5 +195,9 @@
     "formal methods",
     "state machine"
   ],
-  "icon": "icon.png"
+  "icon": "icon.png",
+  "activationEvents": [
+    "onLanguage:writ",
+    "onView:writ.home"
+  ]
 }

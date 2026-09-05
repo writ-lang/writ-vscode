@@ -11,7 +11,14 @@
 set -euo pipefail
 
 here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-ext_id="writ.writ-0.1.0"
+# The extension id VS Code files this under: publisher.name-version, from the
+# manifest. READ rather than written down — a hardcoded copy here was a fourth
+# place the version lived, and the one nobody thinks of at bump time: install
+# under a stale id and the new extension lands BESIDE the old one, both
+# manifests valid, and VS Code loads whichever it scans first. See
+# scripts/version.sh for the copies that remain.
+field() { sed -n "s/^  \"$1\": \"\(.*\)\",\?$/\1/p" "$here/package.json" | head -1; }
+ext_id="$(field publisher).$(field name)-$(field version)"
 
 # Extension ids this extension has been installed under BEFORE. The project was
 # called `pol` (Partial Olog) and the extension `pol.pol`; see "rename: pol

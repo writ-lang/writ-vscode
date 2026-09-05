@@ -1,227 +1,142 @@
 // Copyright (C) 2026 Alex Kunich
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-// The VS Code client. It does one thing: find the server this repository built
-// and hand it to vscode-languageclient over stdio.
+// The VS Code client.
 //
-// There is no compile step and no TypeScript here on purpose. Every LSP request
-// the editor answers is answered by the OCaml server, so a build pipeline would
-// exist to typecheck sixty lines of glue.
+// It does one thing that matters: find the writ this workspace means and hand
+// its language server to vscode-languageclient over stdio. Everything the
+// editor answers — diagnostics, outline, hover, completion — is answered by the
+// OCaml server, so that a squiggle here is one `writ check` would give.
+//
+// There is no compile step and no TypeScript, on purpose: a build pipeline
+// would exist to typecheck glue. What the glue does have is structure, one
+// module per concern under src/, and only this file and each module's
+// [register] touch the vscode API — the rest is plain JavaScript that runs
+// under node, which is what test/ exercises.
 
-const fs = require("fs");
-const path = require("path");
 const vscode = require("vscode");
 const { LanguageClient, TransportKind } = require("vscode-languageclient/node");
 
-const SETTING = "writ.serverPath";
-const POLL_MS = 2000;
+const engine = require("./src/engine");
+const locate = require("./src/locate");
+const staleness = require("./src/staleness");
+const watcher = require("./src/watcher");
+const commands = require("./src/commands");
+const panel = require("./src/panel");
 
-let client;
-let watcher;
+let watching;
 
-// Restart the server when its binary is replaced.
+// Say what is missing, once, and offer the two things that fix it.
 //
-// WHY THIS EXISTS. `make build` writes a NEW inode over the server, and the
-// process already running keeps the old one — `/proc/PID/exe` reads
-// "(deleted)". Nothing surfaces that. The editor keeps answering, confidently,
-// with a language that is one build out of date, and the symptom is a squiggle
-// on code the CLI accepts. That has cost real debugging time more than once,
-// and it is worst exactly when the language itself is being changed, because
-// then the stale answer is *plausible*.
-//
-// Polling rather than [createFileSystemWatcher]: the default server path is
-// under `_build`, which is routinely listed in `files.watcherExclude`, and a
-// watcher that silently never fires would be a worse version of this same bug.
-// One stat every two seconds is not a cost worth optimising.
-function watchServerBinary(serverPath, log, pollMs = POLL_MS) {
-  let known = stampOf(serverPath);
-  let pending = null;
-
-  const id = setInterval(async () => {
-    const now = stampOf(serverPath);
-    if (now === null) return; // mid-build: the file is briefly gone
-    if (now === known) {
-      pending = null; // nothing new, or a change that reverted
-      return;
-    }
-    if (pending !== now) {
-      // Seen a change, but act only once it has stopped moving, so a
-      // multi-second link step restarts the server once and not four times.
-      pending = now;
-      return;
-    }
-    known = now;
-    pending = null;
-    log(`server binary changed on disk — restarting (${serverPath})`);
-    try {
-      await client.restart();
-      log("server restarted; diagnostics are from the current build");
-    } catch (e) {
-      vscode.window.showErrorMessage(
-        `Writ: the language server changed on disk but would not restart: ${e}. ` +
-          "Reload the window to pick it up."
-      );
-    }
-  }, pollMs);
-
-  return { dispose: () => clearInterval(id) };
-}
-
-// Identity of the file as built, not merely its name: dune replaces the
-// executable, so the inode changes even when a rebuild lands within the same
-// mtime granularity.
-function stampOf(p) {
-  try {
-    const s = fs.statSync(p);
-    return `${s.ino}:${s.mtimeMs}:${s.size}`;
-  } catch {
-    return null;
-  }
-}
-
-// The name an installed writ puts on PATH (tooling/lsp/bin/dune's
-// public_name). NOT the same as the in-checkout file name, which is
-// `writ_lsp.exe` under _build.
-const INSTALLED = "writ-lsp";
-
-function onPath(exe) {
-  const dirs = (process.env.PATH || "").split(path.delimiter).filter(Boolean);
-  const names = process.platform === "win32" ? [exe + ".exe", exe] : [exe];
-  return dirs.flatMap((d) => names.map((n) => path.join(d, n)));
-}
-
-// A writ checkout, identified by the engine's own file rather than by being
-// named `writ` — a checkout in a directory called something else is still one.
-function isCheckout(dir) {
-  return fs.existsSync(path.join(dir, "dune-project"));
-}
-
-// The checkouts one level below a workspace folder.
-//
-// WHY ONE LEVEL. Splitting writ and this extension into separate repositories
-// means the natural thing to open is the directory that CONTAINS both, and then
-// the relative default resolves against a folder that has no _build in it. The
-// server is right there, one directory down, and the extension said "no language
-// server" — the same symptom as not having built it, which is the wrong thing to
-// go and check. One level covers that layout and stops; this must not become a
-// walk of the workspace, which on a large tree would cost more than it saves.
-function checkoutsBelow(dir) {
-  let entries;
-  try {
-    entries = fs.readdirSync(dir, { withFileTypes: true });
-  } catch {
-    return []; // a folder that is gone or unreadable is not worth failing over
-  }
-  return entries
-    .filter((e) => e.isDirectory() || e.isSymbolicLink())
-    .map((e) => path.join(dir, e.name))
-    .filter(isCheckout);
-}
-
-// Where to look for the server, in order. Returns every path tried, so a
-// failure can name them rather than say "not found".
-//
-// TWO AUDIENCES, and the order is which one gets served first. A CHECKOUT of
-// this repository builds its own server, and that one must win — the whole
-// point of an OCaml server is that the editor and the checker are the same
-// code, so a developer changing the language wants the build in front of them
-// and not whatever is installed. Everyone ELSE has installed writ (by pin, or
-// unpacked a release) and has no checkout at all; for them the relative default
-// resolves to nothing, and `writ-lsp` on PATH is the only server there is.
-//
-// Serving only the first audience is what this did until now, which meant the
-// extension could not be used with writ installed separately — the case
-// tooling/lsp/bin/dune installs `writ-lsp` for in the first place.
-//
-// An ABSOLUTE setting is taken literally and nothing is guessed after it: an
-// operator who names a server means that server.
-function candidates(configured) {
-  if (path.isAbsolute(configured)) return [configured];
-  const folders = vscode.workspace.workspaceFolders || [];
-  // The folder itself before anything under it: opening the checkout directly
-  // is the common case and must not be slowed down or second-guessed.
-  const inWorkspace = folders.flatMap((f) => [
-    path.join(f.uri.fsPath, configured),
-    ...checkoutsBelow(f.uri.fsPath).map((d) => path.join(d, configured)),
-  ]);
-  return [...inWorkspace, ...onPath(INSTALLED)];
-}
-
-function activate(context) {
-  const configured = vscode.workspace
-    .getConfiguration()
-    .get(SETTING, "_build/default/tooling/lsp/bin/writ_lsp.exe");
-  const tried = candidates(configured);
-  const found = tried.find((p) => fs.existsSync(p));
-
-  if (!found) {
-    // Silence here would look like a server that starts and answers nothing,
-    // which is the same symptom as a broken server and much harder to chase.
-    //
-    // The PATH candidates are summarised rather than listed: naming forty
-    // directories buries the one thing worth reading, which is that `writ-lsp`
-    // was not in any of them.
-    const inWorkspace = tried.filter((p) => !onPath(INSTALLED).includes(p));
-    const where = inWorkspace.length
-      ? `not at ${inWorkspace.join(", ")}, and \`${INSTALLED}\` is not on PATH`
-      : `\`${INSTALLED}\` is not on PATH`;
-    vscode.window.showErrorMessage(
+// Silence here would look like a server that starts and answers nothing, which
+// is the same symptom as a broken server and much harder to chase. The PATH
+// candidates are summarised rather than listed: naming forty directories buries
+// the one thing worth reading, which is that `writ-lsp` was not in any of them.
+function reportMissing(tried) {
+  const onPath = locate.onPath(locate.INSTALLED);
+  const inWorkspace = tried.filter((p) => !onPath.includes(p));
+  const where = inWorkspace.length
+    ? `not at ${inWorkspace.join(", ")}, and \`${locate.INSTALLED}\` is not on PATH`
+    : `\`${locate.INSTALLED}\` is not on PATH`;
+  vscode.window
+    .showErrorMessage(
       `Writ: no language server — ${where}. ` +
         "In a checkout of the writ repository, run `make build`. Otherwise " +
         "install writ (`opam pin add writ git+https://github.com/writ-lang/writ.git`, " +
         "or a release tarball) so " +
-        `\`${INSTALLED}\` is on PATH — or set \`${SETTING}\` to an absolute ` +
-        "path to the server you want."
-    );
+        `\`${locate.INSTALLED}\` is on PATH — or set \`${engine.SETTING}\` to an ` +
+        "absolute path to the server you want.",
+      "Open the Writ panel",
+      "Open settings"
+    )
+    .then((choice) => {
+      if (choice === "Open the Writ panel")
+        vscode.commands.executeCommand("writ.openOverview");
+      else if (choice === "Open settings")
+        vscode.commands.executeCommand("writ.openSettings");
+    });
+}
+
+// Start the server, or record that there is none. Separated from [activate] so
+// that a changed setting can redo exactly this and nothing else.
+async function start(context) {
+  const state = engine.resolve();
+
+  // The panel and the commands are registered whether or not a server was
+  // found — the panel is where the absence is explained, so it must exist
+  // precisely when there is nothing to talk to.
+  if (!state.serverPath) {
+    reportMissing(state.tried);
+    panel.refresh();
     return;
   }
 
-  const serverOptions = {
-    command: found,
-    args: [],
-    transport: TransportKind.stdio,
-  };
-
-  const clientOptions = {
-    documentSelector: [{ scheme: "file", language: "writ" }],
-    outputChannelName: "Writ Language Server",
-  };
-
-  client = new LanguageClient(
+  const client = new LanguageClient(
     "writ",
     "Writ Language Server",
-    serverOptions,
-    clientOptions
+    { command: state.serverPath, args: [], transport: TransportKind.stdio },
+    {
+      documentSelector: [{ scheme: "file", language: "writ" }],
+      outputChannelName: "Writ Language Server",
+    }
   );
-
+  engine.attach(client);
   context.subscriptions.push(client);
-  const started = client.start();
+  await client.start();
+
+  // Which writ answered. This is the whole reason the server reports serverInfo:
+  // the extension and the engine are separate installs and nothing else can tell
+  // them apart. See the panel, which is where the comparison is shown.
+  const version = engine.readVersion(client);
 
   const log = (m) => client.outputChannel.appendLine(`[client] ${m}`);
-  log(`server: ${found}`);
-  watcher = watchServerBinary(found, log);
-  context.subscriptions.push(watcher);
+  log(`server: ${state.serverPath}`);
+  log(`engine: ${version || "did not report a version"}`);
+  if (state.checkout) log(`checkout: ${state.checkout}`);
+  if (state.cli) log(`command line: ${state.cli}`);
 
-  return started;
+  watching = watcher.watchServerBinary(state.serverPath, log, undefined, {
+    restart: () => engine.restart(),
+    onRestart: () => {
+      staleness.markBuilt();
+      panel.refresh();
+    },
+    onFailure: (e) =>
+      vscode.window.showErrorMessage(
+        `Writ: the language server changed on disk but would not restart: ${e}. ` +
+          "Reload the window to pick it up."
+      ),
+  });
+  context.subscriptions.push(watching);
+  panel.refresh();
+}
+
+function activate(context) {
+  panel.register(context);
+  commands.register(context);
+
+  context.subscriptions.push(
+    // The server may have moved, so everything derived from it is suspect: which
+    // binary, which version, whether it is stale, and whether it is running at
+    // all. Reloading the window used to be the only way to pick up a corrected
+    // setting.
+    vscode.workspace.onDidChangeConfiguration(async (event) => {
+      if (!event.affectsConfiguration("writ")) return;
+      if (watching) watching.dispose();
+      const client = engine.current().client;
+      if (client) await client.stop().catch(() => {});
+      engine.attach(null);
+      await start(context);
+    })
+  );
+
+  return start(context);
 }
 
 function deactivate() {
-  if (watcher) watcher.dispose();
+  if (watching) watching.dispose();
+  const client = engine.current().client;
   return client ? client.stop() : undefined;
 }
 
 module.exports = { activate, deactivate };
-
-// Exposed for test-watcher.js, which drives the watcher against a
-// real file on disk. The watcher is the one part of this glue with behaviour of
-// its own, and a watcher that silently never fires is the bug it exists to fix.
-module.exports.__test = {
-  watchServerBinary,
-  stampOf,
-  candidates,
-  onPath,
-  INSTALLED,
-  setClient: (c) => {
-    client = c;
-  },
-};

@@ -17,12 +17,52 @@ real-world domains — over all three of its file types:
 
 Syntax highlighting, plus everything the language's own server provides:
 diagnostics from the real parser and type-checker, a document outline, hover
-and completion.
+and completion — and the verbs, from a panel in the Activity Bar.
 
 **The extension does not bundle a server and does not download one.** The point
 of an OCaml server is that the editor and the checker are the *same code*, so a
 diagnostic in the editor is one `writ check` would give you. It talks to a
 `writ-lsp` you already have.
+
+## The panel
+
+Click the writ mark in the Activity Bar, or run **Writ: Open the Writ Panel**
+from the Command Palette — the icon can end up unpinned, and then the palette is
+the way in.
+
+It shows two things, and both are there because they are otherwise invisible.
+
+**Which writ you are actually talking to.** The extension and the engine are
+separate installs; the panel prints both versions, the server's path, and
+whether the two are in step. Every way that can be wrong produces the *same*
+symptom — an editor that highlights and says nothing else — and the causes want
+different fixes:
+
+| what it says | what happened | the button |
+| --- | --- | --- |
+| no language server | nothing was found at any candidate path | build, or update writ |
+| older than `core/…` | the checkout has been edited since it was built | build the engine |
+| the engine is *x*, the extension is *y* | one of the two was installed on its own | build, or update writ |
+| the server did not say which writ it is | a writ from before the server reported one | update writ |
+
+The stale case is the one nothing else catches. writ's version only moves when
+someone bumps it, so a build from before this morning's edit reports exactly the
+same version as a current one — the two agree, and the agreement is the
+misleading part. The panel compares *times*, and offers the build.
+
+**The verbs**, which the extension used to expose none of:
+
+| | |
+| --- | --- |
+| Check this file | `writ check`, with the sibling `.claims` attached if there is one. From a `.claims` file the roles swap and the model becomes the argument. <kbd>Ctrl+K</kbd> <kbd>Ctrl+Enter</kbd>, or the ▷ in the editor title bar. |
+| Show a situation… | `writ show --at N` |
+| Answer a relation… | `writ derive`, over a `.rules` file — prefix the question with `why ` for the derivation tree |
+| Compare with another model… | `writ compare` against a model you pick |
+
+Each runs in a terminal, and each runs the `writ` belonging to *the same install
+as the language server* — never whatever is first on `PATH`. An editor whose
+"check this file" disagreed with its own squiggles would be worse than having no
+command at all.
 
 ## Install
 
@@ -101,10 +141,15 @@ and builds nothing.
 ### Packaging it instead
 
 ```console
-$ npm install
-$ npx @vscode/vsce package
+$ scripts/package-extension.sh
 $ code --install-extension writ-0.1.0.vsix
 ```
+
+That fetches the dependencies if they are missing and **checks the version
+first**: a `.vsix` is named after the version in the manifest and installs under
+an id built from it, so packaging with the copies out of step produces an
+artifact that is wrong in its filename *and* in where VS Code files it — and
+neither is visible until someone has two of them installed.
 
 Or open this repository in VS Code and press <kbd>F5</kbd> for an Extension
 Development Host.
@@ -155,20 +200,54 @@ Language Server"** shows which server it launched, and says so when it swaps:
 
 ## Development
 
-`extension.js` is the whole client, and there is no compile step: every LSP
-request is answered by the OCaml server, so a build pipeline would exist to
-typecheck sixty lines of glue.
+There is no compile step: every LSP request is answered by the OCaml server, so
+a build pipeline would exist to typecheck glue. What the glue has instead is
+structure — `extension.js` is the wiring, and one module per concern under
+`src/`:
 
-Two behaviours have tests, because both fail **silently** when broken:
+| | |
+| --- | --- |
+| `locate.js` | where the engine is: the candidate order, the checkout a server came from, and the `writ` belonging to it |
+| `watcher.js` | restart when the server binary is replaced |
+| `staleness.js` | is the built server older than the sources it was built from |
+| `engine.js` | what engine this editor is talking to, and the verdict on it |
+| `panel.js` | the Activity Bar view |
+| `commands.js` | the verbs |
+
+Only `extension.js` and each module's `register` touch the `vscode` API. The
+rest is plain JavaScript that runs under node — which is what the tests
+exercise, with nothing stubbed and nothing installed:
 
 ```console
-$ node test-watcher.js    # the restart-on-rebuild watcher
-$ node test-resolve.js    # where the server is looked for
+$ scripts/test.sh
 ```
 
-Run them here: the editor client is its own repository now, so writ has no
-target that runs them. `vscode` and `vscode-languageclient` are stubbed at the
-module loader, so neither needs an editor.
+Four files, and each one is there because its subject fails **silently**:
+
+| | |
+| --- | --- |
+| `test/watcher.test.js` | a watcher that never fires looks exactly like a server that is up to date |
+| `test/resolve.test.js` | the wrong candidate order means "no language server" on a machine that has one |
+| `test/status.test.js` | the verdict is shown to users as a warning; getting it wrong means telling someone with a good install that it is broken |
+| `test/manifest.test.js` | nothing typechecks `package.json` — a command contributed but not registered appears in the palette and does nothing |
+
+### The version
+
+The extension and the engine are released together and live in separate
+repositories, so nothing structural keeps them in step — and the panel now
+*shows* a mismatch to the user, which makes a version that is merely forgotten
+into a warning on somebody's working install.
+
+```console
+$ scripts/version.sh              # print them, and fail if they disagree
+$ scripts/version.sh 0.2.0        # set them
+$ scripts/version.sh --from-writ  # set them to what a writ checkout says
+```
+
+It reads writ's own version from the `dune-project` of a checkout beside this
+one, or of `$WRIT_REPO`. `install.sh` derives its extension id from the manifest
+rather than holding a copy, so the only two places left are `package.json` and
+the `.vsix` filename in this file.
 
 ## License
 

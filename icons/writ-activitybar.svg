@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" role="img" aria-labelledby="t">
+<title id="t">writ</title>
+<!--
+  The activity bar draws this as a MASK: the shape's alpha is kept and the
+  colour comes from the theme, so nothing here may depend on a fill of its own.
+
+  A reduction of docs/images/writ-mark-mono.svg, not a scaling of it. The full
+  mark has nine scutes; six of them are the flanks, and at 24px across they
+  collapse into a grey smudge that reads as no mark at all. What survives is
+  the seal and the column down the middle — which is the half that carries the
+  meaning anyway: the route a witness takes through the states.
+
+  Stroke widths are therefore set for THIS size (about 1.2 and 1.4 device
+  pixels once scaled) rather than inherited from the 512px original, where they
+  would come out under 0.6 and disappear.
+-->
+<g transform="translate(12,12) scale(0.1094)" fill="none" stroke="currentColor" stroke-linejoin="round">
+<circle cx="0" cy="0" r="96" stroke-width="11"/>
+<polygon points="0,-68 30,-57 30,-35 0,-24 -30,-35 -30,-57" stroke-width="13"/>
+<polygon points="0,-22 30,-11 30,11 0,22 -30,11 -30,-11" stroke-width="13"/>
+<polygon points="0,24 30,35 30,57 0,68 -30,57 -30,35" stroke-width="13"/>
+</g>
+</svg>

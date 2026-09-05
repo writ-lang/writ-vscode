@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" role="img" aria-labelledby="t">
+<title id="t">writ</title>
+<!--
+  The explorer's file icon. NOT a mask, unlike the activity bar's — VS Code
+  draws a language icon as given — so the ink is named here, and there is one
+  file per theme. light theme: #1F2328.
+
+  The same reduction as icons/writ-activitybar.svg (seal plus the central
+  column, the flanks dropped because at this size they are a smudge), with the
+  strokes opened up again: 16px is two-thirds of 24, and a line that reads at
+  24 disappears at 16.
+-->
+<g transform="translate(8,8) scale(0.0703)" fill="none" stroke="#1F2328" stroke-linejoin="round">
+<circle cx="0" cy="0" r="96" stroke-width="15"/>
+<polygon points="0,-68 30,-57 30,-35 0,-24 -30,-35 -30,-57" stroke-width="17"/>
+<polygon points="0,-22 30,-11 30,11 0,22 -30,11 -30,-11" stroke-width="17"/>
+<polygon points="0,24 30,35 30,57 0,68 -30,57 -30,35" stroke-width="17"/>
+</g>
+</svg>
