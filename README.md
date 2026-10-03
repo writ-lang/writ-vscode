@@ -31,9 +31,13 @@ The extension needs `writ-lsp`, which every writ install provides — a
 $ ./install.sh        # links the extension and checks the server answers
 ```
 
-Reload the window and open a `.writ` file; there is nothing to configure. To
-build a package instead, use `scripts/package-extension.sh` and
-`code --install-extension writ-*.vsix`.
+Reload the window and open a `.writ` file; there is nothing to configure. Or
+build a package and install that:
+
+```console
+$ scripts/package-extension.sh
+$ code --install-extension writ-0.1.0.vsix
+```
 
 ## Settings
 
