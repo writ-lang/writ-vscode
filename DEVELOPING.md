@@ -10,6 +10,7 @@ structure — `extension.js` is the wiring, and one module per concern under
 | | |
 | --- | --- |
 | `locate.js` | where the engine is: the candidate order, the checkout a server came from, and the `writ` belonging to it |
+| `download.js` | fetching a released writ into the extension's storage: which tarball, the checksum, the unpack |
 | `watcher.js` | restart when the server binary is replaced |
 | `staleness.js` | is the built server older than the sources it was built from |
 | `engine.js` | what engine this editor is talking to, and the verdict on it |
@@ -24,7 +25,7 @@ exercise, with nothing stubbed and nothing installed:
 $ scripts/test.sh
 ```
 
-Five files, and each one is there because its subject fails **silently**:
+Six files, and each one is there because its subject fails **silently**:
 
 | | |
 | --- | --- |
@@ -33,6 +34,7 @@ Five files, and each one is there because its subject fails **silently**:
 | `test/status.test.js` | the verdict is shown to users as a warning; getting it wrong means telling someone with a good install that it is broken |
 | `test/manifest.test.js` | nothing typechecks `package.json` — a command contributed but not registered appears in the palette and does nothing |
 | `test/engine.test.js` | the engine is a separate install — a capability `writ-lsp` stops advertising, or a flag the CLI renames, leaves the extension running and doing nothing. It drives the real server and runs each command line the verbs build; with no `writ-lsp` on PATH it skips, and `WRIT_E2E_REQUIRED=1` makes that a failure |
+| `test/download.test.js` | the wrong tarball name is a 404 that reads like an outage, a download ranked ahead of PATH overrides a writ installed on purpose, and a download button shown to someone with `writ-lsp` on PATH fetches an engine that never runs. `WRIT_DOWNLOAD_LIVE=1` also downloads the real release and runs it |
 
 ## The version
 

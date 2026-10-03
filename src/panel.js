@@ -29,6 +29,7 @@
 // language a person has to hold in their head, and the panel is already open.
 
 const engine = require("./engine");
+const download = require("./download");
 
 const GUIDE = "https://github.com/writ-lang/writ-vscode#readme";
 const LANGUAGE = "https://github.com/writ-lang/writ#readme";
@@ -56,22 +57,36 @@ function escapeHtml(s) {
 // The action button under the status line, if the verdict asks for one.
 // Named here rather than in [engine.verdict] so that the verdict stays a
 // statement about the install and not a piece of user interface.
-function actionButton(action, checkout) {
-  if (action === "build")
-    return '<button id="act">Build the engine</button>';
-  if (action === "install")
+//
+// DOWNLOAD is offered only where it would take effect: with no server at all,
+// or when the server in use is itself a download. A downloaded engine comes
+// after PATH in the search order, so offering it to someone whose writ-lsp is
+// on PATH would fetch an engine that never runs. They get the opam route.
+function actionButton(action, checkout, downloadable) {
+  const button = (cmd, label) =>
+    `<button data-cmd="${cmd}">${label}</button>`;
+  if (action === "build" || (action === "install" && checkout))
+    return button("writ.build", "Build the engine");
+  if (action === "install" && downloadable)
     return (
-      '<button id="act">' +
-      (checkout ? "Build the engine" : "Update writ…") +
-      "</button>"
+      button("writ.downloadEngine", "Download writ") +
+      '\n <button data-cmd="writ.update" class="secondary">Install with opam…</button>'
     );
+  if (action === "install") return button("writ.update", "Update writ…");
   return "";
 }
 
 // Pure, so the whole panel can be rendered and inspected under plain node —
 // which test/panel.test.js does, because a webview is otherwise only checkable
 // by looking at it.
-function renderHtml({ extension, engineVersion, serverPath, checkout, stale }) {
+function renderHtml({
+  extension,
+  engineVersion,
+  serverPath,
+  checkout,
+  stale,
+  downloadable = false,
+}) {
   const v = engine.verdict({
     extension,
     engine: engineVersion,
@@ -152,7 +167,7 @@ function renderHtml({ extension, engineVersion, serverPath, checkout, stale }) {
  </dl>
  <div class="path">${escapeHtml(serverPath || "no language server")}</div>
  <p class="status ${cls}">${status}</p>
- ${v ? actionButton(v.action, checkout) : ""}
+ ${v ? actionButton(v.action, checkout, downloadable) : ""}
  <button data-cmd="writ.restartServer" class="secondary">Restart the language server</button>
  <button data-cmd="writ.showOutput" class="secondary">Show the server log</button>
  <button data-cmd="writ.openSettings" class="secondary">Settings…</button>
@@ -165,9 +180,6 @@ function renderHtml({ extension, engineVersion, serverPath, checkout, stale }) {
  const api = acquireVsCodeApi();
  for (const b of document.querySelectorAll('button[data-cmd]'))
    b.addEventListener('click', () => api.postMessage({ command: b.dataset.cmd }));
- const act = document.getElementById('act');
- if (act) act.addEventListener('click',
-   () => api.postMessage({ command: '${v && v.action === "build" ? "writ.build" : "writ.update"}' }));
  document.getElementById('guide')
    .addEventListener('click', () => api.postMessage({ open: '${GUIDE}' }));
  document.getElementById('language')
@@ -206,6 +218,8 @@ function register(context) {
           serverPath: s.serverPath,
           checkout: s.checkout,
           stale: engine.stale(),
+          downloadable:
+            !!download.platformOf() && (!s.serverPath || s.downloaded),
         });
       };
       live = paint;

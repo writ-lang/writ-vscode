@@ -14,6 +14,7 @@
 
 const locate = require("./locate");
 const staleness = require("./staleness");
+const download = require("./download");
 
 const SETTING = "writ.serverPath";
 
@@ -24,7 +25,13 @@ const state = {
   cli: null, // the `writ` command line belonging to that same install
   version: null, // what its `initialize` reported, or null
   client: null,
+  storage: null, // where downloaded engines live (the extension's global storage)
+  downloaded: false, // whether serverPath is one of them
 };
+
+function setStorage(dir) {
+  state.storage = dir;
+}
 
 function configured() {
   const vscode = require("vscode");
@@ -40,8 +47,12 @@ function folders() {
 // caller does not have to fetch it separately.
 function resolve() {
   const fs = require("fs");
-  state.tried = locate.candidates(configured(), folders());
+  const fetched = state.storage
+    ? download.installed(state.storage).map((x) => x.server)
+    : [];
+  state.tried = locate.candidates(configured(), folders(), fetched);
   state.serverPath = state.tried.find((p) => fs.existsSync(p)) || null;
+  state.downloaded = !!state.serverPath && fetched.includes(state.serverPath);
   state.checkout = state.serverPath ? locate.checkoutOf(state.serverPath) : null;
   state.cli = state.serverPath ? locate.cliFor(state.serverPath) : null;
   state.version = null;
@@ -144,6 +155,7 @@ function restart() {
 
 module.exports = {
   SETTING,
+  setStorage,
   resolve,
   current,
   readVersion,
