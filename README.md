@@ -1,164 +1,161 @@
-# Writ language support for VS Code
+# Writ extension for Visual Studio Code
 
-<img src="docs/images/writ-mark-200.png" alt="writ" width="120" align="left" hspace="16" vspace="4">
+[![AGPL-3.0 License](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 
-*The editor client for [writ](https://github.com/writ-lang/writ). The language,
-the checker and the language server live there; this repository is the VS Code
-front end and nothing else.*
+Writ is a language for modelling a rule-governed world and getting every
+consequence back, with the route. This extension is its editor: highlighting
+for all three file types, and diagnostics, outline, hover and completion
+served by the language's own OCaml server, so what the editor says is what
+`writ check` says.
 
-Editor support for **Writ** — *Partial Olog*, an abstract language for modelling
-real-world domains — over all three of its file types:
+![A writ model and a claim about it](https://raw.githubusercontent.com/writ-lang/writ-vscode/main/docs/images/river-example.png)
 
-| | |
-| --- | --- |
-| `.writ` | models and libraries — schema, instance, transitions |
-| `.claims` | the questions asked of a model, kept as their own document |
-| `.rules` | Datalog-style derivations over a model's situation space |
+## Features
 
-Syntax highlighting, plus everything the language's own server provides:
-diagnostics from the real parser and type-checker, a document outline, hover
-and completion.
+- Syntax highlighting for `.writ` models, `.claims` question files and
+  `.rules` derivations
+- Diagnostics from the real parser and type-checker, as you type
+- Document outline, hover and completion, all from the server
+- Check this file, with the sibling `.claims` attached; from a `.claims` file
+  the roles swap and the model becomes the argument
+- Show a situation, answer a relation, compare with another model, each in a
+  terminal, each with the `writ` that belongs to the same install as the
+  server, never whatever is first on `PATH`
+- A panel in the Activity Bar that shows which writ you are actually talking
+  to: both versions, the server's path, and whether they are in step
+- The server restarts itself when its binary changes on disk, so a fresh
+  `make build` is what answers, not the process from before it
 
-**The extension does not bundle a server and does not download one.** The point
-of an OCaml server is that the editor and the checker are the *same code*, so a
-diagnostic in the editor is one `writ check` would give you. It talks to a
-`writ-lsp` you already have.
+**The extension bundles no server and downloads none.** The point of an
+OCaml server is that the editor and the checker are the same code. It talks
+to a `writ-lsp` you already have.
 
-## Install
+## Supported
 
-Two routes. The extension tries them in this order.
+| Piece         | Where it comes from                                                                 |
+| ------------- | ----------------------------------------------------------------------------------- |
+| `writ-lsp`    | [writ](https://github.com/writ-lang/writ): an opam pin, a release tarball, or a checkout built with `make build` |
+| VS Code       | 1.82 or later                                                                       |
+| Remote windows| The extension runs on the workspace side, next to the server                        |
 
-### With writ installed, and no checkout
+### Feature Contributions
 
-The ordinary case. The extension needs `writ-lsp` on your `PATH`:
+- **Language:** Writ (`.writ`, `.claims`, `.rules`), with grammar
+- **View:** a writ mark in the Activity Bar with an Overview panel
+- **Keybinding:** `Ctrl+K Ctrl+Enter` checks this file
+- **Commands** in the Command Palette under **Writ**, and in the editor and
+  explorer context menus: Check This File; Show a Situation…; Answer a
+  Relation…; Compare With Another Model…; Open the Writ Panel; Restart the
+  Language Server; Show the Server Log; Build the Engine; Update writ…;
+  Settings
+- **Activation:** on opening a Writ file, or the panel
+
+## Getting Started
+
+**You need writ too.** The ordinary route needs `writ-lsp` on your `PATH`:
 
 ```console
 $ opam pin add writ git+https://github.com/writ-lang/writ.git   # or unpack a release tarball
-$ command -v writ-lsp                                          # confirm it is on PATH
+$ command -v writ-lsp
 /home/you/.opam/default/bin/writ-lsp
 ```
 
-`writ` is not in opam-repository, so there is no `opam install writ` to run — the
-pin is the no-checkout route, and opam does the cloning. The other ways to get
-one (a release tarball, `make install-writ` from a checkout) are in
-[writ's README](https://github.com/writ-lang/writ#install); any of them puts
-`writ-lsp` on your `PATH`, which is all this extension needs.
+`writ` is not in opam-repository, so the pin is the no-checkout route. The
+other ways to get one are in [writ's README](https://github.com/writ-lang/writ#install);
+any of them puts `writ-lsp` on your `PATH`, which is all this extension needs.
 
-Then install the extension — from a `.vsix`, or by linking it (below) — and
-open a `.writ` file. Nothing to configure.
-
-### From this repository
+Then install the extension. From this repository:
 
 ```console
 $ ./install.sh
 ```
 
-That fetches the extension's dependencies, links the extension into every VS
-Code extensions directory it finds, and **verifies the server answers a
-handshake** — so a success message means it works, not merely that it
-installed. With no `writ-lsp` yet it warns and installs anyway: the server is
-resolved when the extension activates, so installing writ afterwards is a
-perfectly good order to do things in.
+That fetches the dependencies, links the extension into every VS Code
+extensions directory it finds, and verifies the server answers a handshake,
+so a success message means it works. With no `writ-lsp` yet it warns and
+installs anyway; installing writ afterwards is a fine order. Given a checkout
+of writ inside or beside this one, it builds the server from source first,
+and that build wins over an installed one. Then reload the window
+(Developer: Reload Window); VS Code scans its extensions directory only at
+startup.
 
-Dropped inside a checkout of [writ](https://github.com/writ-lang/writ) instead —
-as `tooling/vscode/` — the same script builds the server from source first, and
-that build wins over any installed one. That is what you want while changing
-the language itself.
-
-Then reload the window (<kbd>Ctrl+Shift+P</kbd> → *Developer: Reload Window*).
-VS Code only scans its extensions directory at startup, which is the one step a
-script cannot do for you.
-
-Re-running is safe. To remove it:
+Or package a `.vsix`:
 
 ```console
-$ ./install.sh --uninstall
-```
-
-The install is a **symlink** into the extensions directory, so editing this repo
-updates the extension with no reinstall — and moving or deleting the clone
-breaks it, which is the trade.
-
-### Requirements
-
-`npm`, for `vscode-languageclient`. Everything else is the server, which comes
-from [writ](https://github.com/writ-lang/writ) — this repository contains no OCaml
-and builds nothing.
-
-### Packaging it instead
-
-```console
-$ npm install
-$ npx @vscode/vsce package
+$ scripts/package-extension.sh
 $ code --install-extension writ-0.1.0.vsix
 ```
 
-Or open this repository in VS Code and press <kbd>F5</kbd> for an Extension
-Development Host.
+Open a `.writ` file. Nothing to configure.
 
-## The setting
+## Usage
 
-**`writ.serverPath`** — default
-`_build/default/tooling/lsp/bin/writ_lsp.exe`.
+**Check.** `Ctrl+K Ctrl+Enter`, or the ▷ in the editor title, runs
+`writ check` on the file with its sibling `.claims` attached if there is one.
+Squiggles while you type come from the same checker, so the two never
+disagree unless the server is stale, and the panel tells you when it is.
 
-- A **relative** path is resolved against each open workspace folder, so the
-  default finds a checkout's own build with nobody editing a setting.
-- If no workspace folder has it, **`writ-lsp` is looked up on `PATH`** — which is
-  what an opam pin or a release tarball provides, and is how this extension
-  works with no checkout at all.
-- An **absolute** path is used exactly as given and nothing else is tried: if
-  you name a server, you mean that server.
+**The verbs**, from the Command Palette or the panel:
 
-If none exists, the extension says so and names what it looked for. Silence
-would be worse — a server that starts and answers nothing looks identical to a
-broken one, and is much harder to chase.
+| Command                         | Runs                                                                 |
+| ------------------------------- | -------------------------------------------------------------------- |
+| **Show a Situation…**           | `writ show --at N`                                                   |
+| **Answer a Relation…**          | `writ derive` over a `.rules` file; prefix the question with `why ` for the derivation tree |
+| **Compare With Another Model…** | `writ compare` against a model you pick                              |
 
-## It restarts itself when the server changes
+**The panel.** Click the writ mark in the Activity Bar, or run **Writ: Open
+the Writ Panel** if the icon ended up unpinned. It prints both versions, the
+server's path, and a verdict. Every way this can be wrong produces the same
+symptom, an editor that highlights and says nothing else, and the causes
+want different fixes:
 
-`make build` writes a *new* file over the server; a process already running
-keeps the old one. Without this the editor goes on answering with a language one
-build out of date, and the symptom is a squiggle on code the CLI accepts — at
-its most confusing exactly when you are changing the language.
+| It says                                   | What happened                                   | The button           |
+| ----------------------------------------- | ----------------------------------------------- | -------------------- |
+| no language server                        | nothing was found at any candidate path         | build, or update writ|
+| older than `core/…`                       | the checkout was edited since it was built      | build the engine     |
+| the engine is *x*, the extension is *y*   | one of the two was installed on its own         | build, or update writ|
+| the server did not say which writ it is   | a writ from before the server reported one      | update writ          |
 
-The client watches the binary and restarts on its own. **View → Output → "Writ
-Language Server"** shows which server it launched, and says so when it swaps:
+The stale case is the one nothing else catches: a build from before this
+morning's edit reports the same version as a current one. The panel compares
+times, and offers the build.
 
-```
-[client] server: /home/you/writ/_build/default/tooling/lsp/bin/writ_lsp.exe
-[client] server binary changed on disk — restarting (…)
-[client] server restarted; diagnostics are from the current build
-```
+**The server log.** View, Output, "Writ Language Server" shows which server
+was launched and says so when it swaps after a rebuild.
 
-## If something looks wrong
+## Configuration
 
-- **A diagnostic you disagree with** — `writ check` is the authority; same code,
-  no process to go stale. If they differ, the server is stale, and the output
-  channel above shows whether it restarted.
-- **No diagnostics at all** — check that channel for which server was launched,
-  or whether the extension reported finding none.
-- **A `(load …)` resolving to the wrong file** — `WRIT_TRACE_LOADS=1 writ check
-  FILE` prints what each load actually resolved to. A `stdlib.writ` sitting
-  beside your model replaces the installed one, by design and silently.
+| Setting           | Default                                        | Description                                                                                                                                                         |
+| ----------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `writ.serverPath` | `_build/default/tooling/lsp/bin/writ_lsp.exe`  | A relative path is resolved against each open workspace folder, so the default finds a checkout's own build. If none has it, `writ-lsp` is looked up on `PATH`. An absolute path is used exactly as given. |
 
-## Development
+If nothing exists at any of those, the extension says so and names what it
+looked for.
 
-`extension.js` is the whole client, and there is no compile step: every LSP
-request is answered by the OCaml server, so a build pipeline would exist to
-typecheck sixty lines of glue.
+## Troubleshooting
 
-Two behaviours have tests, because both fail **silently** when broken:
+- **A diagnostic you disagree with.** `writ check` is the authority. If they
+  differ, the server is stale; the output channel shows whether it restarted.
+- **No diagnostics at all.** Check that channel for which server was
+  launched, or whether the extension reported finding none.
+- **A `(load …)` resolving to the wrong file.** `WRIT_TRACE_LOADS=1 writ check
+  FILE` prints what each load resolved to. A `stdlib.writ` beside your model
+  replaces the installed one, by design and silently.
+- **Removing a linked install:** `./install.sh --uninstall`. The install is a
+  symlink into the extensions directory, so moving the clone breaks it.
 
-```console
-$ node test-watcher.js    # the restart-on-rebuild watcher
-$ node test-resolve.js    # where the server is looked for
-```
+## Developing the Extension
 
-Run them here: the editor client is its own repository now, so writ has no
-target that runs them. `vscode` and `vscode-languageclient` are stubbed at the
-module loader, so neither needs an editor.
+- Open this repository in VS Code and press F5 for an Extension Development
+  Host. There is no compile step; every request is answered by the server.
+- `scripts/test.sh` runs the tests under plain node, nothing stubbed.
+- `scripts/version.sh` keeps the extension's version in step with writ's.
+- [DEVELOPING.md](DEVELOPING.md) has the module map, what each test guards
+  against, and the version scheme. Patches need the CLA in
+  [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-Copyright (C) 2026 Alex Kunich. **GNU Affero General Public License, version 3
-or later** — the same as [writ](https://github.com/writ-lang/writ) itself. See
+Copyright (C) 2026 Alex Kunich. GNU Affero General Public License, version 3
+or later, the same as [writ](https://github.com/writ-lang/writ) itself. See
 [LICENSE](LICENSE).
