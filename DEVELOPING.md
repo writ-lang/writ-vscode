@@ -24,7 +24,7 @@ exercise, with nothing stubbed and nothing installed:
 $ scripts/test.sh
 ```
 
-Four files, and each one is there because its subject fails **silently**:
+Five files, and each one is there because its subject fails **silently**:
 
 | | |
 | --- | --- |
@@ -32,6 +32,7 @@ Four files, and each one is there because its subject fails **silently**:
 | `test/resolve.test.js` | the wrong candidate order means "no language server" on a machine that has one |
 | `test/status.test.js` | the verdict is shown to users as a warning; getting it wrong means telling someone with a good install that it is broken |
 | `test/manifest.test.js` | nothing typechecks `package.json` — a command contributed but not registered appears in the palette and does nothing |
+| `test/engine.test.js` | the engine is a separate install — a capability `writ-lsp` stops advertising, or a flag the CLI renames, leaves the extension running and doing nothing. It drives the real server and runs each command line the verbs build; with no `writ-lsp` on PATH it skips, and `WRIT_E2E_REQUIRED=1` makes that a failure |
 
 ## The version
 
