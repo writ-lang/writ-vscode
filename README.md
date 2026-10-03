@@ -52,7 +52,16 @@ to a `writ-lsp` you already have.
 
 ## Getting Started
 
-**You need writ too.** The ordinary route needs `writ-lsp` on your `PATH`:
+**You need writ too.** On Linux (x86_64 or arm64) the easy route is the
+**Download writ** button: in the Writ panel, in the "no language server"
+message, or as **Writ: Download writ** in the Command Palette. It fetches the
+release matching this extension (or the latest one, if that version was never
+released), verifies its checksum, unpacks it into the extension's own storage
+and starts it. Nothing goes on your `PATH`, and uninstalling the extension
+removes it.
+
+A writ you install yourself always wins over a downloaded one. The usual route
+puts `writ-lsp` on your `PATH`:
 
 ```console
 $ opam pin add writ git+https://github.com/writ-lang/writ.git   # or unpack a release tarball
@@ -111,9 +120,9 @@ want different fixes:
 
 | It says                                   | What happened                                   | The button           |
 | ----------------------------------------- | ----------------------------------------------- | -------------------- |
-| no language server                        | nothing was found at any candidate path         | build, or update writ|
+| no language server                        | nothing was found at any candidate path         | download writ, build, or install with opam |
 | older than `core/…`                       | the checkout was edited since it was built      | build the engine     |
-| the engine is *x*, the extension is *y*   | one of the two was installed on its own         | build, or update writ|
+| the engine is *x*, the extension is *y*   | one of the two was installed on its own         | build, update writ, or download a fresh one if the current one was a download |
 | the server did not say which writ it is   | a writ from before the server reported one      | update writ          |
 
 The stale case is the one nothing else catches: a build from before this
@@ -127,7 +136,7 @@ was launched and says so when it swaps after a rebuild.
 
 | Setting           | Default                                        | Description                                                                                                                                                         |
 | ----------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `writ.serverPath` | `_build/default/tooling/lsp/bin/writ_lsp.exe`  | A relative path is resolved against each open workspace folder, so the default finds a checkout's own build. If none has it, `writ-lsp` is looked up on `PATH`. An absolute path is used exactly as given. |
+| `writ.serverPath` | `_build/default/tooling/lsp/bin/writ_lsp.exe`  | A relative path is resolved against each open workspace folder, so the default finds a checkout's own build. If none has it, `writ-lsp` is looked up on `PATH`, and after that a writ downloaded by the extension. An absolute path is used exactly as given. |
 
 If nothing exists at any of those, the extension says so and names what it
 looked for.

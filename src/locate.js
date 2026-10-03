@@ -77,9 +77,13 @@ function checkoutsBelow(dir) {
 // An ABSOLUTE setting is taken literally and nothing is guessed after it: an
 // operator who names a server means that server.
 //
+// LAST, engines the extension downloaded itself (src/download.js), newest
+// first. After PATH on purpose: a writ someone installed by hand is a choice
+// they made, and a download is only the fallback for having none.
+//
 // `folders` is passed in rather than read from `vscode` so the order can be
 // checked under plain node, which is what test/resolve.test.js does.
-function candidates(configured, folders) {
+function candidates(configured, folders, downloaded = []) {
   if (path.isAbsolute(configured)) return [configured];
   // The folder itself before anything under it: opening the checkout directly
   // is the common case and must not be slowed down or second-guessed.
@@ -87,7 +91,7 @@ function candidates(configured, folders) {
     path.join(f, configured),
     ...checkoutsBelow(f).map((d) => path.join(d, configured)),
   ]);
-  return [...inWorkspace, ...onPath(INSTALLED)];
+  return [...inWorkspace, ...onPath(INSTALLED), ...downloaded];
 }
 
 // The checkout a resolved server came out of, or null for an installed one.

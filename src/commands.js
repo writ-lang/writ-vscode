@@ -21,6 +21,7 @@
 const fs = require("fs");
 const path = require("path");
 const engine = require("./engine");
+const download = require("./download");
 const staleness = require("./staleness");
 const panel = require("./panel");
 
@@ -320,7 +321,67 @@ function update() {
   t.sendText(PIN, false); // NOT executed: an install command is the user's to press enter on
 }
 
-function register(context) {
+// Download a released writ into the extension's storage, then start it.
+//
+// The one-click route for someone with no opam and no checkout. What it fetches
+// and how it checks it is src/download.js; this is the progress, the result,
+// and the restart. `reload` is extension.js's, because only it can start the
+// client again.
+async function downloadEngine(context, reload) {
+  const vscode = require("vscode");
+  const storage = engine.current().storage;
+  const wanted =
+    (context.extension &&
+      context.extension.packageJSON &&
+      context.extension.packageJSON.version) ||
+    "0.0.0";
+  if (!download.platformOf()) {
+    const choice = await vscode.window.showWarningMessage(
+      `Writ: there is no released writ for ${process.platform}-${process.arch} ` +
+        "to download. Install it with opam instead.",
+      "Install with opam…"
+    );
+    if (choice) update();
+    return;
+  }
+  try {
+    const got = await vscode.window.withProgress(
+      {
+        location: vscode.ProgressLocation.Notification,
+        title: "Writ",
+        cancellable: false,
+      },
+      (progress) =>
+        download.download({
+          storage,
+          wanted,
+          say: (m) => progress.report({ message: m }),
+        })
+    );
+    await reload();
+    const s = engine.current();
+    if (s.serverPath !== got.server) {
+      // Downloaded, but something ahead of it in the search order still wins:
+      // a checkout's build, writ-lsp on PATH, or an absolute setting.
+      vscode.window.showInformationMessage(
+        `Writ: downloaded writ ${got.version}, but the server in use is still ` +
+          `${s.serverPath}, which comes first in the search order.`
+      );
+    } else {
+      vscode.window.showInformationMessage(
+        `Writ: writ ${got.version} downloaded and running.`
+      );
+    }
+  } catch (e) {
+    const choice = await vscode.window.showErrorMessage(
+      `Writ: could not download writ: ${e.message}`,
+      "Install with opam…"
+    );
+    if (choice) update();
+  }
+}
+
+function register(context, hooks = {}) {
   const vscode = require("vscode");
   const on = (name, fn) =>
     context.subscriptions.push(vscode.commands.registerCommand(name, fn));
@@ -331,6 +392,9 @@ function register(context) {
   on("writ.compare", compare);
   on("writ.build", build);
   on("writ.update", update);
+  on("writ.downloadEngine", () =>
+    downloadEngine(context, hooks.reload || (() => Promise.resolve()))
+  );
 
   on("writ.restartServer", async () => {
     await engine.restart();

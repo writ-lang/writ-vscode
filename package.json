@@ -102,6 +102,11 @@
         "title": "Writ: Update writ…"
       },
       {
+        "command": "writ.downloadEngine",
+        "title": "Writ: Download writ",
+        "icon": "$(cloud-download)"
+      },
+      {
         "command": "writ.openOverview",
         "title": "Writ: Open the Writ Panel"
       },

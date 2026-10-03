@@ -23,10 +23,12 @@ const staleness = require("./src/staleness");
 const watcher = require("./src/watcher");
 const commands = require("./src/commands");
 const panel = require("./src/panel");
+const download = require("./src/download");
 
 let watching;
 
-// Say what is missing, once, and offer the two things that fix it.
+// Say what is missing, once, and offer what fixes it — first of all a download,
+// where there is a released writ for this platform.
 //
 // Silence here would look like a server that starts and answers nothing, which
 // is the same symptom as a broken server and much harder to chase. The PATH
@@ -45,12 +47,16 @@ function reportMissing(tried) {
         "install writ (`opam pin add writ git+https://github.com/writ-lang/writ.git`, " +
         "or a release tarball) so " +
         `\`${locate.INSTALLED}\` is on PATH — or set \`${engine.SETTING}\` to an ` +
-        "absolute path to the server you want.",
+        "absolute path to the server you want." +
+        (download.platformOf() ? " Or download a released writ in one click." : ""),
+      ...(download.platformOf() ? ["Download writ"] : []),
       "Open the Writ panel",
       "Open settings"
     )
     .then((choice) => {
-      if (choice === "Open the Writ panel")
+      if (choice === "Download writ")
+        vscode.commands.executeCommand("writ.downloadEngine");
+      else if (choice === "Open the Writ panel")
         vscode.commands.executeCommand("writ.openOverview");
       else if (choice === "Open settings")
         vscode.commands.executeCommand("writ.openSettings");
@@ -111,22 +117,33 @@ async function start(context) {
   panel.refresh();
 }
 
+// Stop whatever is running and resolve the server again from scratch.
+//
+// The server may have moved, so everything derived from it is suspect: which
+// binary, which version, whether it is stale, and whether it is running at
+// all. A changed setting needs this, and so does a fresh download.
+async function reload(context) {
+  if (watching) watching.dispose();
+  watching = undefined;
+  const client = engine.current().client;
+  if (client) await client.stop().catch(() => {});
+  engine.attach(null);
+  await start(context);
+}
+
 function activate(context) {
+  // Downloaded engines live in the extension's own storage, which VS Code
+  // keeps across updates of the extension and removes when it is uninstalled.
+  engine.setStorage(context.globalStorageUri.fsPath);
   panel.register(context);
-  commands.register(context);
+  commands.register(context, { reload: () => reload(context) });
 
   context.subscriptions.push(
-    // The server may have moved, so everything derived from it is suspect: which
-    // binary, which version, whether it is stale, and whether it is running at
-    // all. Reloading the window used to be the only way to pick up a corrected
+    // Reloading the window used to be the only way to pick up a corrected
     // setting.
     vscode.workspace.onDidChangeConfiguration(async (event) => {
       if (!event.affectsConfiguration("writ")) return;
-      if (watching) watching.dispose();
-      const client = engine.current().client;
-      if (client) await client.stop().catch(() => {});
-      engine.attach(null);
-      await start(context);
+      await reload(context);
     })
   );
 
