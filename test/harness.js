@@ -1,7 +1,7 @@
 // Copyright (C) 2026 Alex Kunich
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-// What the four test files share: counting, and a name for a failure.
+// What the test files share: counting, and a name for a failure.
 //
 // Deliberately not a framework. Each file is `node test/NAME.test.js` and
 // nothing has to be installed to run one — which matters because this
